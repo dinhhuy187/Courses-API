@@ -11,6 +11,7 @@ public class Course
     [Required]
     [MaxLength(200)]
     public string Title { get; set; } = String.Empty;
+    [Required]
     public string Description { get; set; } = String.Empty;
     [Required] 
     public decimal Price { get; set; }
@@ -19,10 +20,12 @@ public class Course
     [Required]
     [MaxLength(200)]
     public string TeacherName { get; set; } = String.Empty;
-    public string ImageUrl { get; set; } = String.Empty;
+    public string? ImageUrl { get; set; } = String.Empty;
+    [Required]
     public int DurationHours { get; set; }
     public int TotalPurchased { get; set; }
     public decimal AverageRating { get; set; }
+    [Required]
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public int SellerId { get; set; }
@@ -33,5 +36,4 @@ public class Course
     public ICollection<CourseContent> CourseContents { get; set; } = new List<CourseContent>();
     public ICollection<Review> Reviews { get; set; } = new  List<Review>();
     public ICollection<TargetLearner> TargetLearners { get; set; } = new  List<TargetLearner>();
-    public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 }

@@ -21,6 +21,5 @@ public class Transaction
     public DateTime? UpdatedAt { get; set; }
     public int BuyerId { get; set; }
     public User? Buyer { get; set; }
-    public int CourseId { get; set; }
-    public Course? Course { get; set; }
+    public ICollection<TransactionDetail> TransactionDetails { get; set; } = new List<TransactionDetail>();
 }

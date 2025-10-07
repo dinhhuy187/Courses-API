@@ -12,9 +12,9 @@ public class Notification
     [Required]
     [MaxLength(200)]
     public string Message { get; set; } = string.Empty;
-
-    public bool IsRead { get; set; }
+    [Required]
     public DateTime CreatedAt { get; set; }
+    public bool IsRead { get; set; }
     public int SellerId { get; set; }
     public User? Seller { get; set; }
 }
