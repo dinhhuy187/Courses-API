@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: courses_api
+    ports:
+      - "3000:8080"
+    env_file:
+      - .env
+    depends_on:
+      - db
+    environment:
+      # Ghi đè lại chuỗi kết nối DB để trỏ tới service db
+      DB_CONNECTION: Host=db;Port=5432;Database=courses_db;Username=postgres;Password=123456
+    networks:
+      - backend_net
+
+  db:
+    image: postgres:16
+    container_name: courses_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: courses_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - backend_net
+
+networks:
+  backend_net:
+
+volumes:
+  pgdata:
