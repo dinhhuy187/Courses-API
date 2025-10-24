@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using courses_buynsell_api.Entities;
+using courses_buynsell_api.Extensions;
 using courses_buynsell_api.Data;
 using courses_buynsell_api.Config;
 using courses_buynsell_api.Interfaces;
@@ -70,6 +71,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseErrorHandling();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
