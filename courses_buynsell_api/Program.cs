@@ -5,6 +5,7 @@ using courses_buynsell_api.Data;
 using courses_buynsell_api.Config;
 using courses_buynsell_api.Interfaces;
 using courses_buynsell_api.Services;
+using courses_buynsell_api.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -57,9 +58,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 // 🔹 Services
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // 🔹 Controllers + Swagger
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    .AddNewtonsoftJson(options =>
+    {
+        options.SerializerSettings.MissingMemberHandling = Newtonsoft.Json.MissingMemberHandling.Error;
+    });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -70,7 +78,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+// thêm middleware JWT
+app.UseMiddleware<JwtMiddleware>();
 app.UseErrorHandling();
 app.UseHttpsRedirection();
 app.UseAuthentication();
