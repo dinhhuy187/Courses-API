@@ -14,6 +14,8 @@ public class User
     [Required]
     [MaxLength(100)]
     public string Email { get; set; } = String.Empty;
+    [MaxLength(15)]
+    public string? PhoneNumber { get; set; }
     [Required] public string PasswordHash { get; set; } = String.Empty;
     [Required]
     [MaxLength(20)]

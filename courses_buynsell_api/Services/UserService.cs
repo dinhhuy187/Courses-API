@@ -25,6 +25,7 @@ namespace courses_buynsell_api.Services
                     Id = u.Id,
                     FullName = u.FullName,
                     Email = u.Email,
+                    PhoneNumber = u.PhoneNumber ?? String.Empty,
                     Role = u.Role,
                     CreatedAt = u.CreatedAt
                 })
@@ -40,6 +41,7 @@ namespace courses_buynsell_api.Services
                 {
                     FullName = u.FullName,
                     Email = u.Email,
+                    PhoneNumber = u.PhoneNumber,
                     Role = u.Role
                 })
                 .FirstOrDefaultAsync();
@@ -82,6 +84,11 @@ namespace courses_buynsell_api.Services
                 user.Email = request.Email;
             }
 
+            if (request.PhoneNumber != null)
+            {
+                user.PhoneNumber = request.PhoneNumber;
+            }
+
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
 
@@ -89,6 +96,7 @@ namespace courses_buynsell_api.Services
             {
                 FullName = user.FullName,
                 Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
                 Role = user.Role
             };
         }
@@ -106,6 +114,7 @@ namespace courses_buynsell_api.Services
             {
                 FullName = request.FullName,
                 Email = request.Email,
+                PhoneNumber = request.PhoneNumber,
                 PasswordHash = PasswordHasher.HashPassword(request.Password),
                 Role = "Admin",
                 CreatedAt = DateTime.UtcNow
@@ -118,6 +127,7 @@ namespace courses_buynsell_api.Services
             {
                 FullName = newAdmin.FullName,
                 Email = newAdmin.Email,
+                PhoneNumber = newAdmin.PhoneNumber,
                 Role = newAdmin.Role
             };
         }
