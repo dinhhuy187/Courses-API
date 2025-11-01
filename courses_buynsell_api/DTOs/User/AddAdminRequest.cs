@@ -15,6 +15,11 @@ namespace courses_buynsell_api.DTOs.User
     ErrorMessage = "Invalid email format (e.g. name@example.com).")]
         public string Email { get; set; } = string.Empty;
 
+        [MaxLength(11, ErrorMessage = "Phone number must be less than 11 characters.")]
+        [MinLength(10, ErrorMessage = "Phone number must be at least 10 characters.")]
+        [Phone(ErrorMessage = "Invalid phone number format.")]
+        public string? PhoneNumber { get; set; }
+
         [Required(ErrorMessage = "Password is required.")]
         [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
         [MaxLength(50, ErrorMessage = "Password must be less than 50 characters.")]

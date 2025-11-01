@@ -20,6 +20,15 @@ public class ErrorHandlingMiddleware
         try
         {
             await _next(context);
+            // Nếu status là 401 hoặc 403 mà chưa có nội dung trả về -> thêm JSON message
+            if (context.Response.StatusCode == (int)HttpStatusCode.Unauthorized)
+            {
+                await WriteErrorResponse(context, HttpStatusCode.Unauthorized, "Unauthorized: You are not authorized to access this resource.");
+            }
+            else if (context.Response.StatusCode == (int)HttpStatusCode.Forbidden)
+            {
+                await WriteErrorResponse(context, HttpStatusCode.Forbidden, "Forbidden: You do not have permission to access this resource.");
+            }
         }
         catch (Exception ex)
         {
@@ -48,5 +57,15 @@ public class ErrorHandlingMiddleware
         context.Response.StatusCode = (int)statusCode;
 
         return context.Response.WriteAsync(JsonSerializer.Serialize(response));
+    }
+
+    private static async Task WriteErrorResponse(HttpContext context, HttpStatusCode status, string message)
+    {
+        if (context.Response.HasStarted) return;
+
+        context.Response.ContentType = "application/json";
+        context.Response.StatusCode = (int)status;
+        var response = new { message };
+        await context.Response.WriteAsync(JsonSerializer.Serialize(response));
     }
 }
