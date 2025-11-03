@@ -6,6 +6,7 @@ using courses_buynsell_api.Config;
 using courses_buynsell_api.Interfaces;
 using courses_buynsell_api.Services;
 using courses_buynsell_api.Middlewares;
+using courses_buynsell_api.DTOs.Momo;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -18,6 +19,16 @@ Env.Load();
 
 // 🔹 Thêm Environment Variables VÀO Configuration
 builder.Configuration.AddEnvironmentVariables();
+builder.Services.Configure<MomoOptions>(options =>
+{
+    options.PartnerCode = Environment.GetEnvironmentVariable("MOMO_PARTNER_CODE")!;
+    options.AccessKey = Environment.GetEnvironmentVariable("MOMO_ACCESS_KEY")!;
+    options.SecretKey = Environment.GetEnvironmentVariable("MOMO_SECRET_KEY")!;
+    options.ApiUrl = Environment.GetEnvironmentVariable("MOMO_API_URL")!;
+    options.ReturnUrl = Environment.GetEnvironmentVariable("MOMO_RETURN_URL")!;
+    options.NotifyUrl = Environment.GetEnvironmentVariable("MOMO_NOTIFY_URL")!;
+    options.RequestType = Environment.GetEnvironmentVariable("MOMO_REQUEST_TYPE")!;
+});
 
 
 // 🔹 Kết nối PostgreSQL
@@ -62,6 +73,8 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+builder.Services.AddScoped<ICheckoutService, CheckoutService>();
+builder.Services.AddScoped<ITransactionService, TransactionService>();
 
 // 🔹 Controllers + Swagger
 builder.Services
