@@ -18,7 +18,8 @@ public class CheckoutController : ControllerBase
     [HttpPost("CreateMomoPayment")]
     public async Task<IActionResult> CreateMomoPayment([FromBody] CreateMomoPaymentRequestDto dto)
     {
-        var payUrl = await _checkoutService.CreateMomoPaymentAsync(dto);
+        int buyerId = HttpContext.Items["UserId"] as int? ?? -1;
+        var payUrl = await _checkoutService.CreateMomoPaymentAsync(dto, buyerId);
         return Ok(new { payUrl });
     }
 

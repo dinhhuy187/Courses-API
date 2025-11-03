@@ -18,12 +18,15 @@ public class CheckoutService : ICheckoutService
         _context = context;
     }
 
-    public async Task<string> CreateMomoPaymentAsync(CreateMomoPaymentRequestDto request)
+    public async Task<string> CreateMomoPaymentAsync(CreateMomoPaymentRequestDto request, int buyerId)
     {
         string orderId = Guid.NewGuid().ToString();
         string requestId = Guid.NewGuid().ToString();
         string amount = ((long)request.Amount).ToString();
-
+        if (buyerId == -1)
+        {
+            throw new UnauthorizedAccessException("User not authenticated");
+        }
         // Raw hash string
         string rawHash = $"accessKey={_momo.AccessKey}&amount={amount}&extraData=&ipnUrl={_momo.NotifyUrl}&orderId={orderId}&orderInfo=Thanh toan khoa hoc&partnerCode={_momo.PartnerCode}&redirectUrl={_momo.ReturnUrl}&requestId={requestId}&requestType={_momo.RequestType}";
 
@@ -58,7 +61,7 @@ public class CheckoutService : ICheckoutService
             TransactionCode = orderId,
             PaymentMethod = "MOMO",
             TotalAmount = request.Amount,
-            BuyerId = request.BuyerId,
+            BuyerId = buyerId,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -76,7 +79,7 @@ public class CheckoutService : ICheckoutService
         }
         await _context.SaveChangesAsync();
 
-        return momoResponse.PayUrl;
+        return momoResponse!.PayUrl;
     }
 
     public async Task HandleMomoCallbackAsync(Dictionary<string, string> formData)
