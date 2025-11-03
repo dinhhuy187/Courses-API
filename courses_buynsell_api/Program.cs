@@ -56,12 +56,56 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+
+
+
+
+// ZaloPay Config
+var zaloConfig = new ZaloPayConfig
+{
+    AppId = Environment.GetEnvironmentVariable("ZALOPAY_APP_ID")!,
+    Key1 = Environment.GetEnvironmentVariable("ZALOPAY_KEY1")!,
+    Key2 = Environment.GetEnvironmentVariable("ZALOPAY_KEY2")!,
+    Endpoint = Environment.GetEnvironmentVariable("ZALOPAY_ENDPOINT")!,
+    CallbackUrl = Environment.GetEnvironmentVariable("ZALOPAY_CALLBACK_URL")!,
+};
+builder.Services.AddSingleton(zaloConfig);
+
+// Thêm sau phần JWT Settings
+var vnPaySettings = new VnPaySettings
+{
+    TmnCode = Environment.GetEnvironmentVariable("VNPAY_TMNCODE")!,
+    HashSecret = Environment.GetEnvironmentVariable("VNPAY_HASHSECRET")!,
+    Url = Environment.GetEnvironmentVariable("VNPAY_URL")!,
+    ReturnUrl = Environment.GetEnvironmentVariable("VNPAY_RETURNURL")!,
+    Version = Environment.GetEnvironmentVariable("VNPAY_VERSION")!,
+    Command = Environment.GetEnvironmentVariable("VNPAY_COMMAND")!
+};
+builder.Services.Configure<VnPaySettings>(opt =>
+{
+    opt.TmnCode = vnPaySettings.TmnCode;
+    opt.HashSecret = vnPaySettings.HashSecret;
+    opt.Url = vnPaySettings.Url;
+    opt.ReturnUrl = vnPaySettings.ReturnUrl;
+    opt.Version = vnPaySettings.Version;
+    opt.Command = vnPaySettings.Command;
+});
+
+// Thêm vào phần Services (sau IFavoriteService)
+builder.Services.AddScoped<VnPayService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+
+
+
+
+
 // 🔹 Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+builder.Services.AddScoped<IZaloPayService, ZaloPayService>();
 
 // 🔹 Controllers + Swagger
 builder.Services
