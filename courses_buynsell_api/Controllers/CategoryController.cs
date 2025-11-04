@@ -6,6 +6,7 @@ using courses_buynsell_api.DTOs.Category;
 
 namespace courses_buynsell_api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("/[controller]")]
 public class CategoryController : ControllerBase

@@ -3,7 +3,9 @@ namespace courses_buynsell_api.Controllers;
 using courses_buynsell_api.DTOs.Momo;
 using courses_buynsell_api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
+[Authorize]
 [ApiController]
 [Route("[controller]")]
 public class CheckoutController : ControllerBase

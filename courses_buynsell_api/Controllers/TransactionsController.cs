@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 namespace courses_buynsell_api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("[controller]")]
 public class TransactionsController : ControllerBase

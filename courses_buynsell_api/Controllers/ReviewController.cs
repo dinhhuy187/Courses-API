@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace courses_buynsell_api.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("/[controller]")]
     public class ReviewController : ControllerBase
