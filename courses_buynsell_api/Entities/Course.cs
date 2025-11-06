@@ -12,6 +12,7 @@ public class Course
     [MaxLength(200)]
     public string Title { get; set; } = String.Empty;
     [Required]
+    [MaxLength(200)]
     public string Description { get; set; } = String.Empty;
     [Required]
     public decimal Price { get; set; }

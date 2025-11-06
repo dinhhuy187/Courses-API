@@ -113,6 +113,7 @@ namespace courses_buynsell_api.Controllers
 
         // Tạo mới review
         [Authorize(Roles = "Buyer, Admin")]
+        [HttpPost]
         public async Task<IActionResult> CreateReview([FromBody] ReviewRequestDto reviewDto)
         {
             try
