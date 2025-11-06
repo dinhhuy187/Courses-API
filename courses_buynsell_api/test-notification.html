@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Real-time Notification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .status.connecting {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .notifications {
+            margin-top: 30px;
+        }
+
+        .notifications h2 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .badge {
+            background: #ff4757;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .notif-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .notif-item.new {
+            background: #e3f2fd;
+            border-left-color: #2196f3;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .notif-message {
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 15px;
+        }
+
+        .notif-time {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .empty {
+            text-align: center;
+            color: #999;
+            padding: 30px;
+        }
+
+        .test-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px dashed #ddd;
+        }
+
+        .btn-test {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .sound-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .sound-toggle input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔔 Test Real-time Notification</h1>
+
+        <div id="status" class="status connecting">
+            🔄 Đang kết nối...
+        </div>
+
+        <div class="input-group">
+            <label for="apiUrl">URL API Backend:</label>
+            <input type="text" id="apiUrl" value="http://localhost:5230" placeholder="http://localhost:5230">
+        </div>
+
+        <div class="input-group">
+            <label for="sellerId">Seller ID:</label>
+            <input type="number" id="sellerId" value="1" placeholder="Nhập ID seller">
+        </div>
+
+        <div class="sound-toggle">
+            <input type="checkbox" id="soundEnabled" checked>
+            <label for="soundEnabled" style="margin: 0;">🔊 Bật âm thanh thông báo</label>
+        </div>
+
+        <button id="connectBtn" onclick="connectSignalR()">Kết nối SignalR</button>
+        <button onclick="disconnectSignalR()" style="background: #dc3545;">Ngắt kết nối</button>
+
+        <div class="test-section">
+            <h3 style="color: #555; margin-bottom: 10px;">Test gửi thông báo:</h3>
+            <button class="btn-test" onclick="sendTestNotification()">
+                📨 Gửi thông báo test
+            </button>
+        </div>
+
+        <div class="notifications">
+            <h2>
+                Thông báo
+                <span id="unreadBadge" class="badge" style="display: none;">0</span>
+            </h2>
+            <div id="notificationList" class="empty">
+                Chưa có thông báo nào
+            </div>
+        </div>
+    </div>
+
+    <!-- SignalR Library từ CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
+
+    <script>
+        let connection = null;
+        let isConnected = false;
+        const notifications = [];
+
+        // Kết nối SignalR
+        async function connectSignalR() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const sellerId = document.getElementById('sellerId').value;
+
+            if (!sellerId) {
+                alert('Vui lòng nhập Seller ID!');
+                return;
+            }
+
+            updateStatus('connecting', '🔄 Đang kết nối...');
+
+            try {
+                // Tạo connection
+                connection = new signalR.HubConnectionBuilder()
+                    .withUrl(`${apiUrl}/notificationHub`, {
+                        skipNegotiation: true,
+                        transport: signalR.HttpTransportType.WebSockets
+                    })
+                    .withAutomaticReconnect()
+                    .build();
+
+                // Lắng nghe event nhận thông báo mới
+                connection.on('ReceiveNotification', (notification) => {
+                    console.log('📩 Nhận thông báo:', notification);
+                    addNotification(notification);
+                    playSound();
+                });
+
+                // Lắng nghe event cập nhật số lượng chưa đọc
+                connection.on('UpdateUnreadCount', (count) => {
+                    console.log('🔢 Số chưa đọc:', count);
+                    updateUnreadBadge(count);
+                });
+
+                // Bắt đầu kết nối
+                await connection.start();
+                console.log('✅ SignalR Connected');
+
+                // Join vào group của seller
+                await connection.invoke('JoinSellerGroup', sellerId);
+                console.log(`✅ Joined seller group: ${sellerId}`);
+
+                isConnected = true;
+                updateStatus('connected', '✅ Đã kết nối thành công!');
+
+                // Load thông báo có sẵn
+                await loadExistingNotifications(sellerId);
+
+            } catch (error) {
+                console.error('❌ Lỗi kết nối:', error);
+                updateStatus('disconnected', `❌ Lỗi: ${error.message}`);
+                alert('Không thể kết nối! Kiểm tra:\n1. Backend đã chạy chưa?\n2. URL đúng chưa?\n3. CORS đã cấu hình chưa?');
+            }
+        }
+
+        // Ngắt kết nối
+        async function disconnectSignalR() {
+            if (connection) {
+                await connection.stop();
+                isConnected = false;
+                updateStatus('disconnected', '⚠️ Đã ngắt kết nối');
+                console.log('Disconnected');
+            }
+        }
+
+        // Gửi thông báo test
+        async function sendTestNotification() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const sellerId = document.getElementById('sellerId').value;
+
+            if (!isConnected) {
+                alert('Vui lòng kết nối SignalR trước!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${apiUrl}/notification`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: `🎉 Test thông báo lúc ${new Date().toLocaleTimeString('vi-VN')}`,
+                        sellerId: parseInt(sellerId)
+                    })
+                });
+
+                if (response.ok) {
+                    console.log('✅ Đã gửi thông báo test');
+                } else {
+                    alert('Lỗi gửi thông báo: ' + response.status);
+                }
+            } catch (error) {
+                console.error('❌ Lỗi:', error);
+                alert('Không thể gửi thông báo! Kiểm tra API endpoint.');
+            }
+        }
+
+        // Load thông báo có sẵn
+        async function loadExistingNotifications(sellerId) {
+            const apiUrl = document.getElementById('apiUrl').value;
+            try {
+                const response = await fetch(`${apiUrl}/notification/${sellerId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    notifications.length = 0;
+                    notifications.push(...data);
+                    renderNotifications();
+
+                    const unreadCount = notifications.filter(n => !n.isRead).length;
+                    updateUnreadBadge(unreadCount);
+                }
+            } catch (error) {
+                console.error('Không thể load thông báo:', error);
+            }
+        }
+
+        // Thêm thông báo mới
+        function addNotification(notification) {
+            notifications.unshift(notification);
+            renderNotifications();
+            updateUnreadBadge(notifications.filter(n => !n.isRead).length);
+        }
+
+        // Render danh sách thông báo
+        function renderNotifications() {
+            const listEl = document.getElementById('notificationList');
+
+            if (notifications.length === 0) {
+                listEl.innerHTML = '<div class="empty">Chưa có thông báo nào</div>';
+                return;
+            }
+
+            listEl.innerHTML = notifications.map(n => `
+                <div class="notif-item ${n.isRead ? '' : 'new'}">
+                    <div class="notif-message">${n.message}</div>
+                    <div class="notif-time">${new Date(n.createdAt).toLocaleString('vi-VN')}</div>
+                </div>
+            `).join('');
+        }
+
+        // Cập nhật badge số lượng chưa đọc
+        function updateUnreadBadge(count) {
+            const badge = document.getElementById('unreadBadge');
+            if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Cập nhật trạng thái kết nối
+        function updateStatus(type, message) {
+            const statusEl = document.getElementById('status');
+            statusEl.className = `status ${type}`;
+            statusEl.textContent = message;
+        }
+
+        // Phát âm thanh thông báo
+        function playSound() {
+            if (!document.getElementById('soundEnabled').checked) return;
+
+            // Tạo âm thanh đơn giản bằng Web Audio API
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        }
+
+        // Tự động kết nối khi load trang
+        window.addEventListener('load', () => {
+            console.log('🚀 Trang đã load. Nhấn "Kết nối SignalR" để bắt đầu!');
+        });
+    </script>
+</body>
+
+</html>
