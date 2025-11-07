@@ -123,4 +123,12 @@ public class DashboardController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("user")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetUserStatistics()
+    {
+        var result = await _service.GetUserStatisticsAsync();
+        return Ok(result);
+    }
+
 }

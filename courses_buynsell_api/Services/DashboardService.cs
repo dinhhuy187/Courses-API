@@ -202,4 +202,18 @@ public class DashboardService : IDashboardService
         };
     }
 
+    public async Task<UserStatisticsDto> GetUserStatisticsAsync()
+    {
+        var totalUsers = await _context.Users.CountAsync();
+
+        var newUsersToday = await _context.Users
+            .CountAsync(u => u.CreatedAt.Date == DateTime.UtcNow.Date);
+
+        return new UserStatisticsDto
+        {
+            TotalUsers = totalUsers,
+            NewUsersToday = newUsersToday
+        };
+    }
+
 }

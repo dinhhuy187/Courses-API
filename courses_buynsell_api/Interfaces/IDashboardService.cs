@@ -13,5 +13,6 @@ public interface IDashboardService
     Task<RevenueDto> GetTotalRevenueAsync();
     Task<RevenueDto> GetRevenueBySellerAsync(int sellerId);
     Task<SellerStatsDto> GetSellerStatsAsync(int sellerId);
+    Task<UserStatisticsDto> GetUserStatisticsAsync();
 
 }
