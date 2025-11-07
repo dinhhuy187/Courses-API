@@ -13,4 +13,8 @@ public class CreateCourseDto
     public int DurationHours { get; set; }
     public int CategoryId { get; set; }
     public int SellerId { get; set; }
+
+    public List<ContentSkillTargetDto>? CourseContents { get; set; }
+    public List<ContentSkillTargetDto>? CourseSkills { get; set; }
+    public List<ContentSkillTargetDto>? TargetLearners { get; set; }
 }
