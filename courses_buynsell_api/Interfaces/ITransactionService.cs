@@ -7,6 +7,4 @@ public interface ITransactionService
     Task<TransactionDetailDto?> GetByCodeAsync(string transactionCode);
     Task<List<StudentTransactionStatDto>> GetStudentStatsAsync();
     Task<List<CourseTransactionStatDto>> GetCourseStatsAsync();
-    Task<List<MonthlyRevenueDto>> GetLast12MonthsRevenueAsync();
-
 }

@@ -1,4 +1,4 @@
-namespace courses_buynsell_api.DTOs.Transaction;
+namespace courses_buynsell_api.DTOs.Dashboard;
 
 public class MonthlyRevenueDto
 {
