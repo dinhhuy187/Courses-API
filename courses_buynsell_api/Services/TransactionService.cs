@@ -112,33 +112,4 @@ public class TransactionService : ITransactionService
 
         return stats;
     }
-
-    public async Task<List<MonthlyRevenueDto>> GetLast12MonthsRevenueAsync()
-    {
-        var now = DateTime.UtcNow;
-        var fromMonth = now.AddMonths(-11);
-
-        var startDate = new DateTime(fromMonth.Year, fromMonth.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-
-        var revenues = await _context.Transactions
-            .Where(t => t.CreatedAt >= startDate)
-            .GroupBy(t => new { t.CreatedAt.Year, t.CreatedAt.Month })
-            .Select(g => new MonthlyRevenueDto
-            {
-                Year = g.Key.Year,
-                Month = g.Key.Month,
-                TotalRevenue = g.Sum(x => x.TotalAmount)
-            })
-            .OrderBy(g => g.Year)
-            .ThenBy(g => g.Month)
-            .ToListAsync();
-
-        if (!revenues.Any())
-            throw new NotFoundException("No revenue data found for the last 12 months.");
-
-        return revenues;
-    }
-
-
-
 }

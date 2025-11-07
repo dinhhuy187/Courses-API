@@ -47,12 +47,4 @@ public class TransactionsController : ControllerBase
         var data = await _service.GetCourseStatsAsync();
         return Ok(data);
     }
-
-    [HttpGet("stats/revenue/last-12-months")]
-    public async Task<IActionResult> GetLast12MonthsRevenue()
-    {
-        var data = await _service.GetLast12MonthsRevenueAsync();
-        return Ok(data);
-    }
-
 }
