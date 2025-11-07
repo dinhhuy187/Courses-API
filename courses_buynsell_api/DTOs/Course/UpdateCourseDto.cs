@@ -12,4 +12,8 @@ public class UpdateCourseDto
     public string? ImageUrl { get; set; }
     public int? DurationHours { get; set; }
     public int? CategoryId { get; set; }
+    
+    public List<ContentSkillTargetDto>? CourseContents { get; set; }
+    public List<ContentSkillTargetDto>? CourseSkills { get; set; }
+    public List<ContentSkillTargetDto>? TargetLearners { get; set; }
 }
