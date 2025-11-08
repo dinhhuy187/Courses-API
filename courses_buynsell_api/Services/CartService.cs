@@ -30,7 +30,7 @@ public class CartService(AppDbContext context) : ICartService
 
         if (cart == null)
         {
-            cart = new Cart { UserId = dto.UserId };
+            cart = new Cart { UserId = (int)dto.UserId!, CreatedAt = DateTime.UtcNow };
             context.Carts.Add(cart);
         }
         
