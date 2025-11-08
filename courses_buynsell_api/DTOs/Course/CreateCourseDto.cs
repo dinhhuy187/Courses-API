@@ -9,11 +9,10 @@ public class CreateCourseDto
     public string? Description { get; set; }
     [Range(0, double.MaxValue)] public decimal Price { get; set; }
     public string Level { get; set; } = string.Empty;
-    public string? ImageUrl { get; set; }
+    public IFormFile? Image { get; set; }
     public int DurationHours { get; set; }
     public int CategoryId { get; set; }
     public int SellerId { get; set; }
-
     public List<ContentSkillTargetDto>? CourseContents { get; set; }
     public List<ContentSkillTargetDto>? CourseSkills { get; set; }
     public List<ContentSkillTargetDto>? TargetLearners { get; set; }

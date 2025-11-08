@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace courses_buynsell_api.Services;
 
-public class CourseService(AppDbContext context) : ICourseService
+public class CourseService(AppDbContext context, IImageService imageService) : ICourseService
 {
     public async Task<PagedResult<CourseListItemDto>> GetCoursesAsync(CourseQueryParameters q)
     {
@@ -122,7 +122,6 @@ public class CourseService(AppDbContext context) : ICourseService
             Price = dto.Price,
             Level = dto.Level,
             TeacherName = dto.TeacherName,
-            ImageUrl = dto.ImageUrl,
             DurationHours = dto.DurationHours,
             CategoryId = dto.CategoryId,
             SellerId = dto.SellerId,
@@ -154,6 +153,11 @@ public class CourseService(AppDbContext context) : ICourseService
                 entity.TargetLearners.Add(new TargetLearner{ Description = c.Description});
             }
         }
+
+        if (dto.Image != null)
+        {
+            entity.ImageUrl = await imageService.UploadImageAsync(dto.Image);
+        }
         
         context.Courses.Add(entity);
         await context.SaveChangesAsync();
@@ -176,7 +180,6 @@ public class CourseService(AppDbContext context) : ICourseService
         entity.Price = dto.Price ?? entity.Price;
         entity.Level = dto.Level ?? entity.Level;
         entity.TeacherName = dto.TeacherName ?? entity.TeacherName;
-        entity.ImageUrl = dto.ImageUrl;
         entity.DurationHours = dto.DurationHours ?? entity.DurationHours;
         entity.CategoryId = dto.CategoryId  ?? entity.CategoryId;
         entity.UpdatedAt = DateTime.UtcNow;
@@ -207,6 +210,14 @@ public class CourseService(AppDbContext context) : ICourseService
             updateExisting: (e, d) => e.Description = d.Description,
             getId: d => d.Id
         );
+
+        if (dto.Image != null)
+        {
+            if (!string.IsNullOrEmpty(entity.ImageUrl))
+                await imageService.DeleteImageAsync(entity.ImageUrl);
+            
+            entity.ImageUrl = await imageService.UploadImageAsync(dto.Image);
+        }
         
         await context.SaveChangesAsync();
         return await GetByIdAsync(entity.Id);

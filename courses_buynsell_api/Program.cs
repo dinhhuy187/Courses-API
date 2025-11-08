@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using DotNetEnv;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,6 +75,16 @@ builder.Services.Configure<JwtSettings>(opt =>
     opt.ExpiryMinutes = jwtSettings.ExpiryMinutes;
 });
 
+builder.Services.Configure<CloudinaryOptions>(builder.Configuration.GetSection("Cloudinary"));
+
+builder.Services.AddSingleton(provider =>
+{
+    var config = provider.GetRequiredService<IOptions<CloudinaryOptions>>().Value;
+    return new CloudinaryDotNet.Cloudinary(
+        new CloudinaryDotNet.Account(config.CloudName, config.ApiKey, config.ApiSecret)
+    );
+});
+
 // 🔹 Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -104,6 +115,7 @@ builder.Services.AddScoped<ICourseService,CourseService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IImageService, ImageService>();
 
 // Đăng ký Memory Cache
 builder.Services.AddMemoryCache();

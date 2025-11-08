@@ -32,7 +32,7 @@ namespace courses_buynsell_api.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin, Seller")]
-        public async Task<IActionResult> Create([FromBody] CreateCourseDto createCourseDto)
+        public async Task<IActionResult> Create([FromForm] CreateCourseDto createCourseDto)
         {
             var created = await courseService.CreateAsync(createCourseDto);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
@@ -40,7 +40,7 @@ namespace courses_buynsell_api.Controllers
 
         [HttpPut("{id:int}")]
         [Authorize(Roles = "Admin, Seller")]
-        public async Task<IActionResult> Update(int id, [FromBody] UpdateCourseDto updateCourseDto)
+        public async Task<IActionResult> Update(int id, [FromForm] UpdateCourseDto updateCourseDto)
         {
             var updated = await courseService.UpdateAsync(id, updateCourseDto);
             if (updated == null) return NotFound();

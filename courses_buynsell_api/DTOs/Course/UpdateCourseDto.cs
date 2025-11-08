@@ -9,7 +9,7 @@ public class UpdateCourseDto
     [Range(0, double.MaxValue)] public decimal? Price { get; set; }
     public string? Level { get; set; }
     public string? TeacherName { get; set; }
-    public string? ImageUrl { get; set; }
+    public IFormFile? Image { get; set; }
     public int? DurationHours { get; set; }
     public int? CategoryId { get; set; }
     
