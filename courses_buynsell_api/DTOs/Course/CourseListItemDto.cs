@@ -13,5 +13,5 @@ public class CourseListItemDto
     public string TeacherName { get; set; } = string.Empty;
     public int SellerId { get; set; }
     public int DurationHours { get; set; }
-    public int CategoryId { get; set; }
+    public string CategoryName { get; set; } = string.Empty;
 }

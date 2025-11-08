@@ -1,3 +1,4 @@
+using System.Data;
 using System.Net;
 using System.Text.Json;
 using courses_buynsell_api.Exceptions;
@@ -44,6 +45,8 @@ public class ErrorHandlingMiddleware
             BadRequestException => HttpStatusCode.BadRequest,
             UnauthorizedException => HttpStatusCode.Unauthorized,
             NotFoundException => HttpStatusCode.NotFound,
+            KeyNotFoundException => HttpStatusCode.NotFound,
+            DuplicateNameException => HttpStatusCode.Conflict,
             _ => HttpStatusCode.InternalServerError
         };
 

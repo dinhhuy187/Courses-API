@@ -9,10 +9,9 @@ namespace courses_buynsell_api.Services;
 
 public class CourseService(AppDbContext context) : ICourseService
 {
-    private readonly AppDbContext _context = context;
     public async Task<PagedResult<CourseListItemDto>> GetCoursesAsync(CourseQueryParameters q)
     {
-        var query = _context.Courses.AsQueryable();
+        var query = context.Courses.AsQueryable();
         if (!q.IncludeUnapproved)
             query = query.Where(c => c.IsApproved);
         
@@ -48,6 +47,8 @@ public class CourseService(AppDbContext context) : ICourseService
             _ => query.OrderByDescending(c => c.CreatedAt)
         };
 
+        query = query.Include(c => c.Category);
+
         var total = await query.LongCountAsync();
         var items = await query
             .Skip((q.Page - 1) * q.PageSize)
@@ -65,7 +66,7 @@ public class CourseService(AppDbContext context) : ICourseService
                 TeacherName = c.TeacherName,
                 Description = c.Description,
                 DurationHours = c.DurationHours,
-                CategoryId = c.CategoryId
+                CategoryName = c.Category!.Name
             })
             .ToListAsync();
         return new PagedResult<CourseListItemDto>
@@ -79,11 +80,12 @@ public class CourseService(AppDbContext context) : ICourseService
 
     public async Task<CourseDetailDto?> GetByIdAsync(int id)
     {
-        var course = await _context.Courses
+        var course = await context.Courses
             .AsNoTracking()
             .Include(c => c.CourseContents)
             .Include(c => c.CourseSkills)
             .Include(c => c.TargetLearners)
+            .Include(c => c.Category)
             .FirstOrDefaultAsync(c => c.Id == id);
         
         if (course == null) return null;
@@ -101,7 +103,7 @@ public class CourseService(AppDbContext context) : ICourseService
             AverageRating = course.AverageRating,
             TotalPurchased = course.TotalPurchased,
             SellerId = course.SellerId,
-            CategoryId = course.CategoryId,
+            CategoryName = course.Category!.Name,
             IsApproved = course.IsApproved,
             CreatedAt = course.CreatedAt,
             UpdatedAt = course.UpdatedAt,
@@ -153,15 +155,15 @@ public class CourseService(AppDbContext context) : ICourseService
             }
         }
         
-        _context.Courses.Add(entity);
-        await _context.SaveChangesAsync();
+        context.Courses.Add(entity);
+        await context.SaveChangesAsync();
         
         return await GetByIdAsync(entity.Id) ?? throw new InvalidOperationException("Created but cannot retrieve");
     }
 
     public async Task<CourseDetailDto?> UpdateAsync(int id, UpdateCourseDto dto)
     {
-        var entity = await _context.Courses
+        var entity = await context.Courses
             .Include(c => c.CourseContents)
             .Include(c => c.CourseSkills)
             .Include(c => c.TargetLearners)
@@ -206,7 +208,7 @@ public class CourseService(AppDbContext context) : ICourseService
             getId: d => d.Id
         );
         
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
         return await GetByIdAsync(entity.Id);
     }
 
@@ -258,67 +260,67 @@ public class CourseService(AppDbContext context) : ICourseService
 
     public async Task<bool> DeleteAsync(int id)
     {
-        var entity = await _context.Courses.FirstOrDefaultAsync(x => x.Id == id);
+        var entity = await context.Courses.FirstOrDefaultAsync(x => x.Id == id);
         if (entity == null) return false;
-        _context.Courses.Remove(entity);
-        await _context.SaveChangesAsync();
+        context.Courses.Remove(entity);
+        await context.SaveChangesAsync();
         return true;
     }
 
     public async Task<ContentSkillTargetDto> AddCourseContentAsync(int courseId, ContentSkillTargetDto dto)
     {
-        var course = await _context.Courses.FindAsync(courseId) ?? throw new KeyNotFoundException("Course not found");
+        var course = await context.Courses.FindAsync(courseId) ?? throw new KeyNotFoundException("Course not found");
         var content = new CourseContent { Title = dto.Description, CourseId = courseId};
-        _context.CourseContents.Add(content);
-        await _context.SaveChangesAsync();
+        context.CourseContents.Add(content);
+        await context.SaveChangesAsync();
         dto.Id = content.Id;
         return dto;
     }
 
     public async Task<bool> RemoveCourseContentAsync(int courseId, int contentId)
     {
-        var c = await _context.CourseContents.FirstOrDefaultAsync(x => x.Id == contentId && x.CourseId == courseId);
+        var c = await context.CourseContents.FirstOrDefaultAsync(x => x.Id == contentId && x.CourseId == courseId);
         if (c == null) return false;
-        _context.CourseContents.Remove(c);
-        await _context.SaveChangesAsync();
+        context.CourseContents.Remove(c);
+        await context.SaveChangesAsync();
         return true;    
     }
 
     public async Task<ContentSkillTargetDto> AddCourseSkillAsync(int courseId, ContentSkillTargetDto dto)
     {
-        var course = await _context.Courses.FindAsync(courseId) ?? throw new KeyNotFoundException("Course not found");
+        var course = await context.Courses.FindAsync(courseId) ?? throw new KeyNotFoundException("Course not found");
         var skill = new CourseSkill { Name = dto.Description, CourseId = courseId};
-        _context.CourseSkills.Add(skill);
-        await _context.SaveChangesAsync();
+        context.CourseSkills.Add(skill);
+        await context.SaveChangesAsync();
         dto.Id = skill.Id;
         return dto;
     }
 
     public async Task<bool> RemoveCourseSkillAsync(int courseId, int skillId)
     {
-        var c = await _context.CourseSkills.FirstOrDefaultAsync(x => x.CourseId == courseId && x.Id == skillId);
+        var c = await context.CourseSkills.FirstOrDefaultAsync(x => x.CourseId == courseId && x.Id == skillId);
         if (c == null) return false;
-        _context.CourseSkills.Remove(c);
-        await _context.SaveChangesAsync();
+        context.CourseSkills.Remove(c);
+        await context.SaveChangesAsync();
         return true;
     }
 
     public async Task<ContentSkillTargetDto> AddTargetLearnerAsync(int courseId, ContentSkillTargetDto dto)
     {
-        var course = await _context.Courses.FindAsync(courseId) ?? throw new KeyNotFoundException("Course not found");
+        var course = await context.Courses.FindAsync(courseId) ?? throw new KeyNotFoundException("Course not found");
         var target = new TargetLearner { Description = dto.Description, CourseId = courseId};
-        _context.TargetLearners.Add(target);
-        await _context.SaveChangesAsync();
+        context.TargetLearners.Add(target);
+        await context.SaveChangesAsync();
         dto.Id = target.Id;
         return dto;     
     }
 
     public async Task<bool> RemoveTargetLearnerAsync(int courseId, int learnerId)
     {
-        var t = await _context.TargetLearners.FirstOrDefaultAsync(x => x.CourseId == courseId && x.Id == learnerId);
+        var t = await context.TargetLearners.FirstOrDefaultAsync(x => x.CourseId == courseId && x.Id == learnerId);
         if (t == null) return false;
-        _context.TargetLearners.Remove(t);
-        await _context.SaveChangesAsync();
+        context.TargetLearners.Remove(t);
+        await context.SaveChangesAsync();
         return true;
     }
 }

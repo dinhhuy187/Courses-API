@@ -103,6 +103,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ICourseService,CourseService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<ICartService, CartService>();
 
 // Đăng ký Memory Cache
 builder.Services.AddMemoryCache();
