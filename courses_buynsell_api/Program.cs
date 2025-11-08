@@ -77,12 +77,17 @@ builder.Services.Configure<JwtSettings>(opt =>
 
 builder.Services.Configure<CloudinaryOptions>(builder.Configuration.GetSection("Cloudinary"));
 
+var cloudName = Environment.GetEnvironmentVariable("CLOUDINARY_CLOUD_NAME")
+                ?? builder.Configuration["Cloudinary:CloudName"];
+var apiKey = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY")
+             ?? builder.Configuration["Cloudinary:ApiKey"];
+var apiSecret = Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET")
+                ?? builder.Configuration["Cloudinary:ApiSecret"];
+
 builder.Services.AddSingleton(provider =>
 {
-    var config = provider.GetRequiredService<IOptions<CloudinaryOptions>>().Value;
-    return new CloudinaryDotNet.Cloudinary(
-        new CloudinaryDotNet.Account(config.CloudName, config.ApiKey, config.ApiSecret)
-    );
+    var account = new CloudinaryDotNet.Account(cloudName ?? "", apiKey ?? "", apiSecret ?? "");
+    return new CloudinaryDotNet.Cloudinary(account);
 });
 
 // 🔹 Authentication
