@@ -1,5 +1,6 @@
 ﻿using courses_buynsell_api.DTOs.Cart;
 using courses_buynsell_api.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,32 +10,46 @@ namespace courses_buynsell_api.Controllers
     [ApiController]
     public class CartController(ICartService cartService) : ControllerBase
     {
-        [HttpGet("{userId:int}")]
-        public async Task<IActionResult> Get(int userId)
+        [HttpGet]
+        [Authorize(Roles = "Admin, Buyer")] 
+        public async Task<IActionResult> Get()
         {
+            var userId = int.Parse(User.FindFirst("id")!.Value);
             var cart = await cartService.GetCartAsync(userId);
             if (cart == null) return Ok(new CartDto() { UserId = userId, Items = new List<CartItemDto>() }); // return empty to frontend
             return Ok(cart);
         }
         
         [HttpPost("items")]
+        [Authorize(Roles = "Admin, Buyer")]
         public async Task<IActionResult> AddItem([FromBody] AddCartItemDto dto)
         {
+            var userId = int.Parse(User.FindFirst("id")!.Value);
+            if (dto.UserId != null)
+            {
+                if (userId != dto.UserId)
+                    return BadRequest("UserId not match, something goes wrong");
+            }
+            else dto.UserId = userId;
             var cart = await cartService.AddItemAsync(dto);
             return Ok(cart);
         }
         
-        [HttpDelete("{userId:int}/items/{itemId:int}")]
-        public async Task<IActionResult> RemoveItem(int userId, int itemId)
+        [HttpDelete("items/{itemId:int}")]
+        [Authorize(Roles = "Admin, Buyer")]
+        public async Task<IActionResult> RemoveItem(int itemId)
         {
+            var userId = int.Parse(User.FindFirst("id")!.Value);
             var ok = await cartService.RemoveItemAsync(userId, itemId);
             if (!ok) return NotFound();
             return NoContent();
         }
         
-        [HttpDelete("{userId:int}")]
-        public async Task<IActionResult> ClearCart(int userId)
+        [HttpDelete]
+        [Authorize(Roles = "Admin, Buyer")]
+        public async Task<IActionResult> ClearCart()
         {
+            var userId = int.Parse(User.FindFirst("id")!.Value);
             var ok = await cartService.ClearCartAsync(userId);
             if (!ok) return NotFound();
             return NoContent();

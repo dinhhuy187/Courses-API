@@ -47,6 +47,7 @@ public class ErrorHandlingMiddleware
             NotFoundException => HttpStatusCode.NotFound,
             KeyNotFoundException => HttpStatusCode.NotFound,
             DuplicateNameException => HttpStatusCode.Conflict,
+            UnauthorizedAccessException => HttpStatusCode.Unauthorized,
             _ => HttpStatusCode.InternalServerError
         };
 
