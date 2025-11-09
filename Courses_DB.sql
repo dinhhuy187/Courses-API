@@ -622,7 +622,25 @@ VALUES
 ('Bạn có khóa học mới đang chờ duyệt', NOW() - INTERVAL '15 days', false, 5);
 
 
--- 1. Tạo function để tính lại AverageRating
+-- I. Tạo function để tự động tăng TotalPurchased
+CREATE OR REPLACE FUNCTION increase_total_purchased()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE public."Courses"
+    SET "TotalPurchased" = "TotalPurchased" + 1
+    WHERE "Id" = NEW."CourseId";
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Gắn trigger vào bảng Enrollments
+CREATE TRIGGER trg_increase_total_purchased
+AFTER INSERT ON public."Enrollments"
+FOR EACH ROW
+EXECUTE FUNCTION increase_total_purchased();
+
+
+-- II. Tạo function để tính lại AverageRating
 CREATE OR REPLACE FUNCTION update_course_average_rating()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -657,21 +675,24 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 2. Tạo trigger khi INSERT review mới
+-- 1. Tạo trigger khi INSERT review mới
 CREATE TRIGGER trigger_insert_review_update_rating
 AFTER INSERT ON public."Reviews"
 FOR EACH ROW
 EXECUTE FUNCTION update_course_average_rating();
 
--- 3. Tạo trigger khi UPDATE review (thay đổi Star)
+-- 2. Tạo trigger khi UPDATE review (thay đổi Star)
 CREATE TRIGGER trigger_update_review_update_rating
 AFTER UPDATE OF "Star" ON public."Reviews"
 FOR EACH ROW
 WHEN (OLD."Star" IS DISTINCT FROM NEW."Star")
 EXECUTE FUNCTION update_course_average_rating();
 
--- 4. Tạo trigger khi DELETE review
+-- 3. Tạo trigger khi DELETE review
 CREATE TRIGGER trigger_delete_review_update_rating
 AFTER DELETE ON public."Reviews"
 FOR EACH ROW
 EXECUTE FUNCTION update_course_average_rating();
+
+
+
