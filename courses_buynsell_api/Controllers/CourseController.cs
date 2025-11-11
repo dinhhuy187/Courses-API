@@ -58,7 +58,7 @@ namespace courses_buynsell_api.Controllers
         
         [HttpPost("{courseId:int}/contents")]
         [Authorize(Roles = "Admin, Seller")]
-        public async Task<IActionResult> AddContent(int courseId, [FromBody] SkillTargetDto dto)
+        public async Task<IActionResult> AddContent(int courseId, [FromBody] CourseContentDto dto)
         {
             var result = await courseService.AddCourseContentAsync(courseId, dto);
             return CreatedAtAction(nameof(GetById), new { id = courseId }, result);
