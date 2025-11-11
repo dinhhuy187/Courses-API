@@ -107,9 +107,9 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
             IsApproved = course.IsApproved,
             CreatedAt = course.CreatedAt,
             UpdatedAt = course.UpdatedAt,
-            CourseContents = course.CourseContents.Select(c => new ContentSkillTargetDto{ Id = c.Id, Description = c.Title}).ToList(),
-            CourseSkills = course.CourseSkills.Select(c => new ContentSkillTargetDto{ Id = c.Id, Description = c.Name}).ToList(),
-            TargetLearners = course.TargetLearners.Select(c => new ContentSkillTargetDto{ Id = c.Id, Description = c.Description}).ToList()
+            CourseContents = course.CourseContents.Select(c => new CourseContentDto{ Id = c.Id, Title = c.Title, Description = c.Description}).ToList(),
+            CourseSkills = course.CourseSkills.Select(c => new SkillTargetDto{ Id = c.Id, Description = c.Name}).ToList(),
+            TargetLearners = course.TargetLearners.Select(c => new SkillTargetDto{ Id = c.Id, Description = c.Description}).ToList()
         };
     }
 
@@ -134,7 +134,7 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         {
             foreach (var c in dto.CourseContents)
             {
-                entity.CourseContents.Add(new CourseContent{ Title = c.Description});
+                entity.CourseContents.Add(new CourseContent{ Title = c.Title, Description = c.Description});
             }
         }
         
@@ -185,27 +185,31 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         entity.UpdatedAt = DateTime.UtcNow;
         
         // SYNC CourseContents
-        SyncChildren<CourseContent, ContentSkillTargetDto>(
+        SyncChildren<CourseContent, CourseContentDto>(
             existing: entity.CourseContents,
-            incoming: dto.CourseContents ?? new List<ContentSkillTargetDto>(),
-            addNew: d => new CourseContent{ Title = d.Description},
-            updateExisting: (e, d) => e.Title = d.Description,
+            incoming: dto.CourseContents ?? new List<CourseContentDto>(),
+            addNew: d => new CourseContent{ Title = d.Title, Description = d.Description },
+            updateExisting: (e, d) =>
+            {
+                e.Title = d.Description;
+                e.Description = d.Description;
+            },
             getId: d => d.Id
             );
         
         // SYNC CourseSkills
-        SyncChildren<CourseSkill, ContentSkillTargetDto>(
+        SyncChildren<CourseSkill, SkillTargetDto>(
             existing: entity.CourseSkills,
-            incoming: dto.CourseSkills ?? new List<ContentSkillTargetDto>(),
+            incoming: dto.CourseSkills ?? new List<SkillTargetDto>(),
             addNew: d => new CourseSkill{ Name = d.Description},
             updateExisting: (e, d) => e.Name = d.Description,
             getId: d => d.Id
         );
         
         // SYNC TargetLearners
-        SyncChildren<TargetLearner, ContentSkillTargetDto>(
+        SyncChildren<TargetLearner, SkillTargetDto>(
             existing: entity.TargetLearners,
-            incoming: dto.TargetLearners ?? new List<ContentSkillTargetDto>(),
+            incoming: dto.TargetLearners ?? new List<SkillTargetDto>(),
             addNew: d => new TargetLearner{ Description = d.Description},
             updateExisting: (e, d) => e.Description = d.Description,
             getId: d => d.Id
@@ -278,10 +282,10 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         return true;
     }
 
-    public async Task<ContentSkillTargetDto> AddCourseContentAsync(int courseId, ContentSkillTargetDto dto)
+    public async Task<CourseContentDto> AddCourseContentAsync(int courseId, CourseContentDto dto)
     {
         var course = await context.Courses.FindAsync(courseId) ?? throw new KeyNotFoundException("Course not found");
-        var content = new CourseContent { Title = dto.Description, CourseId = courseId};
+        var content = new CourseContent { Title = dto.Title, Description = dto.Description, CourseId = courseId};
         context.CourseContents.Add(content);
         await context.SaveChangesAsync();
         dto.Id = content.Id;
@@ -297,7 +301,7 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         return true;    
     }
 
-    public async Task<ContentSkillTargetDto> AddCourseSkillAsync(int courseId, ContentSkillTargetDto dto)
+    public async Task<SkillTargetDto> AddCourseSkillAsync(int courseId, SkillTargetDto dto)
     {
         var course = await context.Courses.FindAsync(courseId) ?? throw new KeyNotFoundException("Course not found");
         var skill = new CourseSkill { Name = dto.Description, CourseId = courseId};
@@ -316,7 +320,7 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         return true;
     }
 
-    public async Task<ContentSkillTargetDto> AddTargetLearnerAsync(int courseId, ContentSkillTargetDto dto)
+    public async Task<SkillTargetDto> AddTargetLearnerAsync(int courseId, SkillTargetDto dto)
     {
         var course = await context.Courses.FindAsync(courseId) ?? throw new KeyNotFoundException("Course not found");
         var target = new TargetLearner { Description = dto.Description, CourseId = courseId};

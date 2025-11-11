@@ -58,7 +58,7 @@ namespace courses_buynsell_api.Controllers
         
         [HttpPost("{courseId:int}/contents")]
         [Authorize(Roles = "Admin, Seller")]
-        public async Task<IActionResult> AddContent(int courseId, [FromBody] ContentSkillTargetDto dto)
+        public async Task<IActionResult> AddContent(int courseId, [FromBody] SkillTargetDto dto)
         {
             var result = await courseService.AddCourseContentAsync(courseId, dto);
             return CreatedAtAction(nameof(GetById), new { id = courseId }, result);
@@ -75,7 +75,7 @@ namespace courses_buynsell_api.Controllers
 
         [HttpPost("{courseId:int}/skills")]
         [Authorize(Roles = "Admin, Seller")]
-        public async Task<IActionResult> AddSkill(int courseId, [FromBody] ContentSkillTargetDto dto)
+        public async Task<IActionResult> AddSkill(int courseId, [FromBody] SkillTargetDto dto)
         {
             var result = await courseService.AddCourseSkillAsync(courseId, dto);
             return CreatedAtAction(nameof(GetById), new { id = courseId }, result);
@@ -92,7 +92,7 @@ namespace courses_buynsell_api.Controllers
     
         [HttpPost("{courseId:int}/target-learners")]
         [Authorize(Roles = "Admin, Seller")]
-        public async Task<IActionResult> AddTargetLearner(int courseId, [FromBody] ContentSkillTargetDto dto)
+        public async Task<IActionResult> AddTargetLearner(int courseId, [FromBody] SkillTargetDto dto)
         {
             var result = await courseService.AddTargetLearnerAsync(courseId, dto);
             return CreatedAtAction(nameof(GetById), new { id = courseId }, result);

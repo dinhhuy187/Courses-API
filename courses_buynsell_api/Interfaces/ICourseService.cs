@@ -11,10 +11,10 @@ public interface ICourseService
     Task<CourseDetailDto?> UpdateAsync(int id, UpdateCourseDto dto);
     Task<bool> DeleteAsync(int id);
     
-    Task<ContentSkillTargetDto> AddCourseContentAsync(int courseId, ContentSkillTargetDto dto);
+    Task<CourseContentDto> AddCourseContentAsync(int courseId, CourseContentDto dto);
     Task<bool> RemoveCourseContentAsync(int courseId, int contentId);
-    Task<ContentSkillTargetDto> AddCourseSkillAsync(int courseId, ContentSkillTargetDto dto);
+    Task<SkillTargetDto> AddCourseSkillAsync(int courseId, SkillTargetDto dto);
     Task<bool> RemoveCourseSkillAsync(int courseId, int skillId);
-    Task<ContentSkillTargetDto> AddTargetLearnerAsync(int courseId, ContentSkillTargetDto dto);
+    Task<SkillTargetDto> AddTargetLearnerAsync(int courseId, SkillTargetDto dto);
     Task<bool> RemoveTargetLearnerAsync(int courseId, int learnerId);
 }
