@@ -131,4 +131,17 @@ public class DashboardController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("course/{courseId}/monthly-revenue")]
+    [Authorize(Roles = "Seller")]
+    public async Task<ActionResult<List<MonthlyRevenueDto>>> GetCourseMonthlyRevenue(int courseId)
+    {
+        int sellerId = HttpContext.Items["UserId"] as int? ?? -1;
+        if (sellerId == -1)
+        {
+            return Unauthorized("You are not authorized to access this resource.");
+        }
+        var data = await _service.GetMonthlyRevenueByCourseAsync(sellerId, courseId);
+        return Ok(data);
+    }
+
 }

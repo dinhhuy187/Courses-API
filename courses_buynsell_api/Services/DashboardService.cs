@@ -216,4 +216,48 @@ public class DashboardService : IDashboardService
         };
     }
 
+    public async Task<List<MonthlyRevenueDto>> GetMonthlyRevenueByCourseAsync(int sellerId, int courseId)
+    {
+        if (courseId <= 0)
+            throw new ArgumentException("Invalid course ID.", nameof(courseId));
+
+        if (sellerId <= 0)
+            throw new UnauthorizedAccessException("Invalid seller ID.");
+
+        // Kiểm tra khóa học có thuộc về người bán hiện tại không
+        var ownsCourse = await _context.Courses
+            .AnyAsync(c => c.Id == courseId && c.SellerId == sellerId);
+
+        if (!ownsCourse)
+            throw new UnauthorizedAccessException("You do not have permission to view this course’s revenue.");
+
+        var twelveMonthsAgo = DateTime.UtcNow.AddMonths(-11);
+
+        var result = await _context.TransactionDetails
+            .Include(td => td.Transaction)
+            .Include(td => td.Course)
+            .Where(td =>
+                td.CourseId == courseId &&
+                td.Course!.SellerId == sellerId &&
+                td.Transaction != null &&
+                td.Transaction.CreatedAt >= twelveMonthsAgo
+            )
+            .GroupBy(td => new { td.Transaction!.CreatedAt.Year, td.Transaction.CreatedAt.Month })
+            .Select(g => new MonthlyRevenueDto
+            {
+                Year = g.Key.Year,
+                Month = g.Key.Month,
+                TotalRevenue = g.Sum(x => x.Price)
+            })
+            .OrderBy(g => g.Year)
+            .ThenBy(g => g.Month)
+            .ToListAsync();
+
+        if (!result.Any())
+            throw new NotFoundException($"No revenue data found for course ID {courseId} in the last 12 months.");
+
+        return result;
+    }
+
+
 }

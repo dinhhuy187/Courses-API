@@ -27,12 +27,20 @@ namespace courses_buynsell_api.Middlewares
             var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
 
             if (token != null)
-                AttachUserToContext(context, dbContext, token);
+            {
+                var isValid = AttachUserToContext(context, dbContext, token);
+                if (!isValid)
+                {
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    await context.Response.WriteAsync("Invalid or expired token");
+                    return; // ❌ Dừng middleware chain ở đây
+                }
+            }
 
             await _next(context);
         }
 
-        private void AttachUserToContext(HttpContext context, AppDbContext dbContext, string token)
+        private bool AttachUserToContext(HttpContext context, AppDbContext dbContext, string token)
         {
             try
             {
@@ -45,30 +53,29 @@ namespace courses_buynsell_api.Middlewares
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = false,
                     ValidateAudience = false,
-                    ClockSkew = TimeSpan.Zero
+                    ClockSkew = TimeSpan.Zero // không cho phép lệch thời gian
                 }, out SecurityToken validatedToken);
 
                 var jwtToken = (JwtSecurityToken)validatedToken;
-                var userIdStr = jwtToken.Claims.First(x => x.Type == "id").Value;
+                var userIdStr = jwtToken.Claims.FirstOrDefault(x => x.Type == "id")?.Value;
+
                 if (int.TryParse(userIdStr, out var userId))
                 {
-                    // Lưu int (không còn kiểu string)
                     context.Items["UserId"] = userId;
-                    Console.WriteLine("Authenticated User ID: " + userId);
-                }
-                else
-                {
-                    // Nếu không parse được, bỏ qua (không throw)
-                    Console.WriteLine("Failed to parse user id claim: " + userIdStr);
+                    return true;
                 }
 
-                // Gắn user vào context để controller có thể lấy ra
-                context.Items["UserId"] = userId;
-                Console.WriteLine("Authenticated User ID: " + userId);
+                return false;
             }
-            catch
+            catch (SecurityTokenExpiredException)
             {
-                throw new UnauthorizedAccessException("Invalid Token");
+                Console.WriteLine("⚠️ Token đã hết hạn");
+                return false; // 401
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Token không hợp lệ: {ex.Message}");
+                return false; // 401
             }
         }
     }
