@@ -1,115 +1,153 @@
 using Microsoft.EntityFrameworkCore;
 using courses_buynsell_api.Data;
+using courses_buynsell_api.DTOs;
 using courses_buynsell_api.DTOs.Transaction;
 using courses_buynsell_api.Interfaces;
-using Microsoft.AspNetCore.Http.HttpResults;
 using courses_buynsell_api.Exceptions;
-namespace courses_buynsell_api.Services;
 
-public class TransactionService : ITransactionService
+namespace courses_buynsell_api.Services
 {
-    private readonly AppDbContext _context;
-
-    public TransactionService(AppDbContext context)
+    public class TransactionService : ITransactionService
     {
-        _context = context;
-    }
+        private readonly AppDbContext _context;
 
-    public async Task<List<TransactionListDto>> GetAllAsync()
-    {
-        var result = await _context.Transactions
-            .Include(t => t.Buyer)
-            .Select(t => new TransactionListDto
-            {
-                TransactionCode = t.TransactionCode,
-                BuyerName = t.Buyer!.FullName ?? "(Unknown buyer)",
-                TotalAmount = t.TotalAmount,
-                PaymentMethod = t.PaymentMethod,
-                CreatedAt = t.CreatedAt
-            })
-            .ToListAsync();
+        public TransactionService(AppDbContext context)
+        {
+            _context = context;
+        }
 
-        if (!result.Any())
-            throw new NotFoundException("No transactions found.");
-
-        return result;
-    }
-
-
-    public async Task<TransactionDetailDto?> GetByCodeAsync(string transactionCode)
-    {
-        if (string.IsNullOrWhiteSpace(transactionCode))
-            throw new ArgumentException("Transaction code cannot be empty.", nameof(transactionCode));
-
-        var transaction = await _context.Transactions
-            .Include(t => t.Buyer)
-            .Include(t => t.TransactionDetails)
-                .ThenInclude(td => td.Course)
-            .Where(t => t.TransactionCode == transactionCode)
-            .Select(t => new TransactionDetailDto
-            {
-                TransactionCode = t.TransactionCode,
-                CreatedAt = t.CreatedAt,
-                BuyerName = t.Buyer!.FullName ?? "(Unknown buyer)",
-                TotalAmount = t.TotalAmount,
-                Courses = t.TransactionDetails.Select(td => new TransactionDetailCourseDto
+        public async Task<PagedResult<TransactionListDto>> GetAllAsync(int page, int pageSize)
+        {
+            var query = _context.Transactions
+                .Include(t => t.Buyer)
+                .Select(t => new TransactionListDto
                 {
-                    CourseName = td.Course!.Title ?? "(Unknown course)",
-                    Price = td.Price
-                }).ToList()
-            })
-            .FirstOrDefaultAsync();
+                    TransactionCode = t.TransactionCode,
+                    BuyerName = t.Buyer!.FullName ?? "(Unknown buyer)",
+                    TotalAmount = t.TotalAmount,
+                    PaymentMethod = t.PaymentMethod,
+                    CreatedAt = t.CreatedAt
+                });
 
-        if (transaction is null)
-            throw new NotFoundException($"Transaction with code '{transactionCode}' not found.");
+            var totalCount = await query.LongCountAsync();
 
-        return transaction;
-    }
+            if (totalCount == 0)
+                throw new NotFoundException("No transactions found.");
 
+            var items = await query
+                .OrderByDescending(t => t.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
-    public async Task<List<StudentTransactionStatDto>> GetStudentStatsAsync()
-    {
-        var stats = await _context.Users
-            .Where(u => u.Transactions.Any())
-            .Select(u => new StudentTransactionStatDto
+            return new PagedResult<TransactionListDto>
             {
-                StudentId = u.Id,
-                FullName = u.FullName,
-                PurchaseCount = u.Transactions.Count(),
-                TotalRevenue = u.Transactions.Sum(t => t.TotalAmount),
-                LastTransactionDate = u.Transactions
-                    .OrderByDescending(t => t.CreatedAt)
-                    .Select(t => t.CreatedAt)
-                    .FirstOrDefault()
-            })
-            .ToListAsync();
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                Items = items
+            };
+        }
 
-        if (!stats.Any())
-            throw new NotFoundException("No student transaction data available.");
+        public async Task<TransactionDetailDto?> GetByCodeAsync(string transactionCode)
+        {
+            if (string.IsNullOrWhiteSpace(transactionCode))
+                throw new ArgumentException("Transaction code cannot be empty.", nameof(transactionCode));
 
-        return stats;
-    }
+            var transaction = await _context.Transactions
+                .Include(t => t.Buyer)
+                .Include(t => t.TransactionDetails)
+                    .ThenInclude(td => td.Course)
+                .Where(t => t.TransactionCode == transactionCode)
+                .Select(t => new TransactionDetailDto
+                {
+                    TransactionCode = t.TransactionCode,
+                    CreatedAt = t.CreatedAt,
+                    BuyerName = t.Buyer!.FullName ?? "(Unknown buyer)",
+                    TotalAmount = t.TotalAmount,
+                    Courses = t.TransactionDetails.Select(td => new TransactionDetailCourseDto
+                    {
+                        CourseName = td.Course!.Title ?? "(Unknown course)",
+                        Price = td.Price
+                    }).ToList()
+                })
+                .FirstOrDefaultAsync();
 
+            if (transaction is null)
+                throw new NotFoundException($"Transaction with code '{transactionCode}' not found.");
 
-    public async Task<List<CourseTransactionStatDto>> GetCourseStatsAsync()
-    {
-        var stats = await _context.TransactionDetails
-            .Include(td => td.Course)
-            .Include(td => td.Transaction)
-            .GroupBy(td => new { td.CourseId, td.Course!.Title })
-            .Select(g => new CourseTransactionStatDto
+            return transaction;
+        }
+
+        public async Task<PagedResult<StudentTransactionStatDto>> GetStudentStatsAsync(int page, int pageSize)
+        {
+            var query = _context.Users
+                .Where(u => u.Transactions.Any())
+                .Select(u => new StudentTransactionStatDto
+                {
+                    StudentId = u.Id,
+                    FullName = u.FullName,
+                    PurchaseCount = u.Transactions.Count(),
+                    TotalRevenue = u.Transactions.Sum(t => t.TotalAmount),
+                    LastTransactionDate = u.Transactions
+                        .OrderByDescending(t => t.CreatedAt)
+                        .Select(t => t.CreatedAt)
+                        .FirstOrDefault()
+                });
+
+            var totalCount = await query.LongCountAsync();
+
+            if (totalCount == 0)
+                throw new NotFoundException("No student transaction data available.");
+
+            var items = await query
+                .OrderByDescending(s => s.TotalRevenue)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PagedResult<StudentTransactionStatDto>
             {
-                CourseId = g.Key.CourseId,
-                CourseTitle = g.Key.Title,
-                PurchaseCount = g.Count(),
-                TotalRevenue = g.Sum(x => x.Price),
-                LastTransactionDate = g.Max(x => x.Transaction!.CreatedAt)
-            })
-            .ToListAsync();
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                Items = items
+            };
+        }
 
-        if (!stats.Any())
-            throw new NotFoundException("No course transaction data available.");
+        public async Task<PagedResult<CourseTransactionStatDto>> GetCourseStatsAsync(int page, int pageSize)
+        {
+            var query = _context.TransactionDetails
+                .Include(td => td.Course)
+                .Include(td => td.Transaction)
+                .GroupBy(td => new { td.CourseId, td.Course!.Title })
+                .Select(g => new CourseTransactionStatDto
+                {
+                    CourseId = g.Key.CourseId,
+                    CourseTitle = g.Key.Title,
+                    PurchaseCount = g.Count(),
+                    TotalRevenue = g.Sum(x => x.Price),
+                    LastTransactionDate = g.Max(x => x.Transaction!.CreatedAt)
+                });
 
-        return stats;
+            var totalCount = await query.LongCountAsync();
+
+            if (totalCount == 0)
+                throw new NotFoundException("No course transaction data available.");
+
+            var items = await query
+                .OrderByDescending(c => c.TotalRevenue)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PagedResult<CourseTransactionStatDto>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                Items = items
+            };
+        }
     }
 }
