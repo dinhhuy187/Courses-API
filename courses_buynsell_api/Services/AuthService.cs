@@ -82,7 +82,7 @@ public class AuthService : IAuthService
 
         if (user == null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
             throw new UnauthorizedException("Invalid or expired refresh token. Please log in again.");
-
+        Console.WriteLine("hehe");
         return await GenerateJwtToken(user);
     }
 
@@ -134,6 +134,26 @@ public class AuthService : IAuthService
         user.PasswordResetToken = null;
         user.PasswordResetTokenExpiry = null;
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<UserProfileDto> GetCurrentUserAsync(int userId)
+    {
+        var user = await _context.Users
+            .Where(u => u.Id == userId)
+            .Select(u => new UserProfileDto
+            {
+                Id = u.Id,
+                Email = u.Email,
+                FullName = u.FullName,
+                Role = u.Role,
+                IsEmailVerified = u.IsEmailVerified
+            })
+            .FirstOrDefaultAsync();
+
+        if (user == null)
+            throw new NotFoundException("User not found.");
+
+        return user;
     }
 
     private async Task<AuthResponseDto> GenerateJwtToken(User user)
