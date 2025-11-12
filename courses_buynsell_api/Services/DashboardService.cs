@@ -259,5 +259,40 @@ public class DashboardService : IDashboardService
         return result;
     }
 
+    public async Task<List<ReviewStarCountDto>> GetReviewStarCountsByCourseAsync(int sellerId, int courseId)
+    {
+        if (courseId <= 0)
+            throw new ArgumentException("Invalid course ID.", nameof(courseId));
+
+        if (sellerId <= 0)
+            throw new UnauthorizedAccessException("Invalid seller ID.");
+
+        // ✅ Kiểm tra xem course có thuộc seller đang đăng nhập không
+        var ownsCourse = await _context.Courses
+            .AnyAsync(c => c.Id == courseId && c.SellerId == sellerId);
+
+        if (!ownsCourse)
+            throw new UnauthorizedAccessException("You do not have permission to view this course’s reviews.");
+
+        // ✅ Lấy dữ liệu review thực tế
+        var reviewGroups = await _context.Reviews
+            .Include(r => r.Course)
+            .Where(r => r.CourseId == courseId && r.Course!.SellerId == sellerId)
+            .GroupBy(r => r.Star)
+            .Select(g => new { Star = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        // ✅ Luôn trả đủ từ 1 → 5 sao
+        var result = Enumerable.Range(1, 5)
+            .Select(star => new ReviewStarCountDto
+            {
+                Star = star,
+                Count = reviewGroups.FirstOrDefault(g => g.Star == star)?.Count ?? 0
+            })
+            .OrderByDescending(x => x.Star)
+            .ToList();
+
+        return result;
+    }
 
 }

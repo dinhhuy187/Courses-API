@@ -144,4 +144,16 @@ public class DashboardController : ControllerBase
         return Ok(data);
     }
 
+    [HttpGet("courses/{courseId}/review-stars")]
+    [Authorize(Roles = "Seller")]
+    public async Task<IActionResult> GetReviewStarCountsByCourse(int courseId)
+    {
+        int sellerId = HttpContext.Items["UserId"] as int? ?? -1;
+        if (sellerId == -1)
+            return Unauthorized("You are not authorized to access this resource.");
+
+        var data = await _service.GetReviewStarCountsByCourseAsync(sellerId, courseId);
+        return Ok(data);
+    }
+
 }
