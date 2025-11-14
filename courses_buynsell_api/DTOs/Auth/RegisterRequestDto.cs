@@ -12,7 +12,7 @@ namespace courses_buynsell_api.DTOs.Auth
         [EmailAddress(ErrorMessage = "Invalid email format.")]
         [MaxLength(100, ErrorMessage = "Email must be less than 100 characters.")]
         [RegularExpression(@"^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$",
-    ErrorMessage = "Invalid email format (e.g. name@example.com).")]
+            ErrorMessage = "Invalid email format (e.g. name@example.com).")]
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Password is required.")]
@@ -21,5 +21,9 @@ namespace courses_buynsell_api.DTOs.Auth
         [RegularExpression(@"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]+$",
             ErrorMessage = "Password must contain at least one letter and one number.")]
         public string Password { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Role is required.")]
+        [RegularExpression(@"^(Buyer|Seller)$", ErrorMessage = "Role must be either 'Buyer' or 'Seller'.")]
+        public string Role { get; set; } = string.Empty;
     }
 }

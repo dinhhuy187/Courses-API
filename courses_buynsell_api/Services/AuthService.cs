@@ -40,7 +40,7 @@ public class AuthService : IAuthService
             FullName = dto.FullName,
             Email = dto.Email,
             PasswordHash = PasswordHasher.HashPassword(dto.Password),
-            Role = "User",
+            Role = dto.Role,
             IsEmailVerified = false,
             EmailVerificationToken = verificationToken,
             EmailVerificationTokenExpiry = DateTime.UtcNow.AddHours(24),

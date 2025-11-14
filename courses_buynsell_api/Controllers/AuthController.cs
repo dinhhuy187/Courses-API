@@ -30,7 +30,8 @@ public class AuthController : ControllerBase
         {
             message = "Registration successful. Please check your email to verify your account.",
             email = result.Email,
-            fullName = result.FullName
+            fullName = result.FullName,
+            role = result.Role
         });
     }
 
