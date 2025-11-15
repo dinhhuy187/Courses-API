@@ -11,10 +11,12 @@ namespace courses_buynsell_api.Services
     public class UserService : IUserService
     {
         private readonly AppDbContext _context;
+        private readonly IImageService _imageService;
 
-        public UserService(AppDbContext context)
+        public UserService(AppDbContext context, IImageService imageService)
         {
             _context = context;
+            _imageService = imageService;
         }
 
         public async Task<IEnumerable<UserListDto>> GetAllUsersAsync()
@@ -42,7 +44,8 @@ namespace courses_buynsell_api.Services
                     FullName = u.FullName,
                     Email = u.Email,
                     PhoneNumber = u.PhoneNumber,
-                    Role = u.Role
+                    Role = u.Role,
+                    AvatarUrl = u.AvatarUrl // thêm avatar
                 })
                 .FirstOrDefaultAsync();
 
@@ -53,6 +56,7 @@ namespace courses_buynsell_api.Services
 
             return user;
         }
+
 
         public async Task DeleteUserAsync(DeleteUserRequest request)
         {
@@ -74,19 +78,28 @@ namespace courses_buynsell_api.Services
                 throw new NotFoundException($"User with ID {id} not found.");
             }
 
+            // Update text fields
             if (!string.IsNullOrEmpty(request.FullName))
-            {
                 user.FullName = request.FullName;
-            }
 
             if (!string.IsNullOrEmpty(request.Email))
-            {
                 user.Email = request.Email;
-            }
 
-            if (request.PhoneNumber != null)
-            {
+            if (!string.IsNullOrEmpty(request.PhoneNumber))
                 user.PhoneNumber = request.PhoneNumber;
+
+            // Update avatar nếu có file mới
+            if (request.Avatar != null)
+            {
+                // Xóa avatar cũ nếu có
+                if (!string.IsNullOrWhiteSpace(user.AvatarUrl))
+                {
+                    await _imageService.DeleteImageAsync(user.AvatarUrl);
+                }
+
+                // Upload avatar mới
+                var avatarUrl = await _imageService.UploadImageAsync(request.Avatar);
+                user.AvatarUrl = avatarUrl;
             }
 
             _context.Users.Update(user);
@@ -97,9 +110,11 @@ namespace courses_buynsell_api.Services
                 FullName = user.FullName,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
-                Role = user.Role
+                Role = user.Role,
+                AvatarUrl = user.AvatarUrl
             };
         }
+
 
         public async Task<UserDetailDto> AddAdminAsync(AddAdminRequest request)
         {
@@ -149,8 +164,5 @@ namespace courses_buynsell_api.Services
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
         }
-
-
-
     }
 }

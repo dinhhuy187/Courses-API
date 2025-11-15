@@ -23,6 +23,9 @@ namespace courses_buynsell_api.DTOs.User
         [MinLength(9, ErrorMessage = "Phone number must be at least 9 characters.")]
         public string? PhoneNumber { get; set; }
 
+        [JsonProperty("avatar")]
+        public IFormFile? Avatar { get; set; }
+
         // ✅ Custom validation: ít nhất phải có 1 trường hợp được gửi lên để update
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {

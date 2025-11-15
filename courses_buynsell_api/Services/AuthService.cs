@@ -187,7 +187,8 @@ public class AuthService : IAuthService
             RefreshToken = refreshToken,
             Email = user.Email,
             FullName = user.FullName,
-            Role = user.Role
+            Role = user.Role,
+            PhoneNumber = string.IsNullOrEmpty(user.PhoneNumber) ? "" : user.PhoneNumber
         };
     }
 }

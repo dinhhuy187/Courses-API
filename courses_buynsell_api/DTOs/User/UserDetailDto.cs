@@ -6,4 +6,5 @@ public class UserDetailDto
     public string Email { get; set; } = String.Empty;
     public string? PhoneNumber { get; set; }
     public string Role { get; set; } = String.Empty;
+    public string? AvatarUrl { get; set; }
 }
