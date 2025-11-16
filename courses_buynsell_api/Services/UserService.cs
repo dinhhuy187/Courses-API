@@ -182,5 +182,66 @@ namespace courses_buynsell_api.Services
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<PagedResult<UserListDto>> GetUsersByRoleAsync(string role, int page, int pageSize)
+        {
+            role = role.Trim();
+
+            // kiểm tra role có tồn tại trong DB
+            bool roleExists = await _context.Users.AnyAsync(u => u.Role == role);
+            if (!roleExists)
+            {
+                throw new NotFoundException($"Role '{role}' does not exist.");
+            }
+
+            // query theo role
+            var query = _context.Users
+                .Where(u => u.Role == role)
+                .Select(u => new UserListDto
+                {
+                    Id = u.Id,
+                    FullName = u.FullName,
+                    Email = u.Email,
+                    PhoneNumber = u.PhoneNumber ?? "",
+                    Role = u.Role,
+                    CreatedAt = u.CreatedAt
+                });
+
+            var totalCount = await query.LongCountAsync();
+
+            var items = await query
+                .OrderByDescending(u => u.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PagedResult<UserListDto>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                Items = items
+            };
+        }
+        public async Task<UserStatisticsDto> GetUserStatisticsAsync()
+        {
+            var totalUsers = await _context.Users.LongCountAsync();
+
+            var roleCounts = await _context.Users
+                .GroupBy(u => u.Role)
+                .Select(g => new
+                {
+                    Role = g.Key,
+                    Count = g.LongCount()
+                })
+                .ToDictionaryAsync(x => x.Role, x => x.Count);
+
+            return new UserStatisticsDto
+            {
+                TotalUsers = totalUsers,
+                RoleCounts = roleCounts
+            };
+        }
+
     }
 }

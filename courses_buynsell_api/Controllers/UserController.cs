@@ -187,5 +187,43 @@ namespace courses_buynsell_api.Controllers
                 return StatusCode(500, new { message = ex.Message });
             }
         }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("role/{role}")]
+        public async Task<IActionResult> GetUsersByRole(string role, int page = 1, int pageSize = 10)
+        {
+            try
+            {
+                var result = await _userService.GetUsersByRoleAsync(role, page, pageSize);
+                return Ok(result);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (BadRequestException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+        [Authorize(Roles = "Admin")]
+        [HttpGet("statistics")]
+        public async Task<IActionResult> GetUserStatistics()
+        {
+            try
+            {
+                var result = await _userService.GetUserStatisticsAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
     }
 }

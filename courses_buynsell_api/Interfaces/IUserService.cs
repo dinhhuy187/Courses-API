@@ -12,4 +12,6 @@ public interface IUserService
     Task<UserDetailDto> UpdateUserAsync(int id, UpdateUserRequest request);
     Task<UserDetailDto> AddAdminAsync(AddAdminRequest request);
     Task ChangeUserPasswordAsync(ChangeUserPasswordRequest request, int userId);
+    Task<PagedResult<UserListDto>> GetUsersByRoleAsync(string role, int page, int pageSize);
+    Task<UserStatisticsDto> GetUserStatisticsAsync();
 }
