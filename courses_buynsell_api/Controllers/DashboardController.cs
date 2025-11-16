@@ -156,4 +156,12 @@ public class DashboardController : ControllerBase
         return Ok(data);
     }
 
+    [HttpGet("revenue-7-days")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetRevenueLast7Days()
+    {
+        var result = await _service.GetRevenueLast7DaysAsync();
+        return Ok(result);
+    }
+
 }

@@ -295,4 +295,32 @@ public class DashboardService : IDashboardService
         return result;
     }
 
+    public async Task<List<DailyRevenueDto>> GetRevenueLast7DaysAsync()
+    {
+        var today = DateTime.UtcNow.Date;
+        var startDate = today.AddDays(-6);
+
+        var data = await _context.Transactions
+            .Where(t => t.CreatedAt.Date >= startDate && t.CreatedAt.Date <= today)
+            .GroupBy(t => t.CreatedAt.Date)
+            .Select(g => new DailyRevenueDto
+            {
+                Date = g.Key,
+                Revenue = g.Sum(x => x.TotalAmount)
+            })
+            .ToListAsync();
+
+        // đảm bảo đủ 7 ngày (kể cả ngày không có doanh thu)
+        var result = Enumerable.Range(0, 7)
+            .Select(i => startDate.AddDays(i))
+            .Select(d => new DailyRevenueDto
+            {
+                Date = d,
+                Revenue = data.FirstOrDefault(x => x.Date == d)?.Revenue ?? 0
+            })
+            .ToList();
+
+        return result;
+    }
+
 }

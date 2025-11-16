@@ -3,6 +3,7 @@ using courses_buynsell_api.DTOs.User;
 using courses_buynsell_api.Exceptions;
 using courses_buynsell_api.Interfaces;
 using courses_buynsell_api.Helpers;
+using courses_buynsell_api.DTOs;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -19,20 +20,37 @@ namespace courses_buynsell_api.Services
             _imageService = imageService;
         }
 
-        public async Task<IEnumerable<UserListDto>> GetAllUsersAsync()
+        public async Task<PagedResult<UserListDto>> GetAllUsersAsync(int page, int pageSize)
         {
-            var users = await _context.Users
+            var query = _context.Users
                 .Select(u => new UserListDto
                 {
                     Id = u.Id,
                     FullName = u.FullName,
                     Email = u.Email,
-                    PhoneNumber = u.PhoneNumber ?? String.Empty,
+                    PhoneNumber = u.PhoneNumber ?? string.Empty,
                     Role = u.Role,
                     CreatedAt = u.CreatedAt
-                })
+                });
+
+            var totalCount = await query.LongCountAsync();
+
+            if (totalCount == 0)
+                throw new NotFoundException("No users found.");
+
+            var items = await query
+                .OrderByDescending(u => u.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
-            return users;
+
+            return new PagedResult<UserListDto>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                Items = items
+            };
         }
 
         public async Task<UserDetailDto> GetUserByIdAsync(int id)

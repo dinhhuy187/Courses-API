@@ -20,12 +20,12 @@ namespace courses_buynsell_api.Controllers
         // GET: /User
         [Authorize(Roles = "Admin")]
         [HttpGet]
-        public async Task<IActionResult> GetAllUsers()
+        public async Task<IActionResult> GetAllUsers(int page = 1, int pageSize = 10)
         {
             try
             {
-                var users = await _userService.GetAllUsersAsync();
-                return Ok(users);
+                var result = await _userService.GetAllUsersAsync(page, pageSize);
+                return Ok(result);
             }
             catch (BadRequestException ex)
             {
@@ -36,6 +36,7 @@ namespace courses_buynsell_api.Controllers
                 return StatusCode(500, new { message = ex.Message });
             }
         }
+
 
         // GET: /User/Detail
         [HttpGet("Detail")]

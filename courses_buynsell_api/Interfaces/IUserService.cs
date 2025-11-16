@@ -1,11 +1,12 @@
 using courses_buynsell_api.DTOs.User;
 using courses_buynsell_api.Entities;
+using courses_buynsell_api.DTOs;
 
 namespace courses_buynsell_api.Interfaces;
 
 public interface IUserService
 {
-    Task<IEnumerable<UserListDto>> GetAllUsersAsync();
+    Task<PagedResult<UserListDto>> GetAllUsersAsync(int page, int pageSize);
     Task<UserDetailDto> GetUserByIdAsync(int id);
     Task DeleteUserAsync(DeleteUserRequest request);
     Task<UserDetailDto> UpdateUserAsync(int id, UpdateUserRequest request);

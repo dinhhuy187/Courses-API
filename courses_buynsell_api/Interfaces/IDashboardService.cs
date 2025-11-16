@@ -16,5 +16,6 @@ public interface IDashboardService
     Task<UserStatisticsDto> GetUserStatisticsAsync();
     Task<List<MonthlyRevenueDto>> GetMonthlyRevenueByCourseAsync(int sellerId, int courseId);
     Task<List<ReviewStarCountDto>> GetReviewStarCountsByCourseAsync(int sellerId, int courseId);
+    Task<List<DailyRevenueDto>> GetRevenueLast7DaysAsync();
 
 }
