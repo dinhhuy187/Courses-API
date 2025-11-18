@@ -13,11 +13,13 @@ namespace courses_buynsell_api.Services
     {
         private readonly AppDbContext _context;
         private readonly IImageService _imageService;
+        private readonly IEmailService _emailService;
 
-        public UserService(AppDbContext context, IImageService imageService)
+        public UserService(AppDbContext context, IImageService imageService, IEmailService emailService)
         {
             _context = context;
             _imageService = imageService;
+            _emailService = emailService;
         }
 
         public async Task<PagedResult<UserListDto>> GetAllUsersAsync(int page, int pageSize)
@@ -139,9 +141,10 @@ namespace courses_buynsell_api.Services
             var existingUser = await _context.Users
                 .FirstOrDefaultAsync(u => u.Email == request.Email);
             if (existingUser != null)
-            {
                 throw new BadRequestException("A user with this email already exists.");
-            }
+
+            // Tạo token xác thực email
+            var verificationToken = TokenHelper.GenerateRefreshToken();
 
             var newAdmin = new Entities.User
             {
@@ -150,11 +153,17 @@ namespace courses_buynsell_api.Services
                 PhoneNumber = request.PhoneNumber,
                 PasswordHash = PasswordHasher.HashPassword(request.Password),
                 Role = "Admin",
+                IsEmailVerified = false,
+                EmailVerificationToken = verificationToken,
+                EmailVerificationTokenExpiry = DateTime.UtcNow.AddHours(24),
                 CreatedAt = DateTime.UtcNow
             };
 
             _context.Users.Add(newAdmin);
             await _context.SaveChangesAsync();
+
+            // Gửi email xác nhận
+            await _emailService.SendVerificationEmailAsync(newAdmin.Email, verificationToken);
 
             return new UserDetailDto
             {
@@ -164,6 +173,7 @@ namespace courses_buynsell_api.Services
                 Role = newAdmin.Role
             };
         }
+
 
         public async Task ChangeUserPasswordAsync(ChangeUserPasswordRequest request, int userId)
         {

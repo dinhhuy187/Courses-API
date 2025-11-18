@@ -23,28 +23,28 @@ public class ReviewService : IReviewService
         try
         {
             var review = await _context.Reviews
-                .Include(r => r.Buyer) // lấy thông tin user
+                .Include(r => r.Buyer)
                 .Where(r => r.CourseId == courseId)
                 .Select(r => new ReviewResponseDto
                 {
                     Id = r.Id,
+                    UserId = r.BuyerId, // NEW
                     UserName = r.Buyer!.FullName ?? "Unknown user",
+                    Image = r.Buyer!.AvatarUrl, // NEW
                     Rating = r.Star,
                     Comment = r.Comment ?? string.Empty,
                     CreatedAt = r.CreatedAt
                 })
                 .ToListAsync();
 
-            if (review == null)
-                throw new Exception("Review not found");
-
             return review;
         }
-        catch (Exception)
+        catch
         {
             throw;
         }
     }
+
 
     public async Task<IEnumerable<ReviewResponseDto>> GetBySellerCourses(int courseId, int sellerId)
     {
@@ -65,7 +65,9 @@ public class ReviewService : IReviewService
             .Select(r => new ReviewResponseDto
             {
                 Id = r.Id,
+                UserId = r.BuyerId, // NEW
                 UserName = r.Buyer != null ? r.Buyer.FullName : "Unknown",
+                Image = r.Buyer != null ? r.Buyer.AvatarUrl : null, // NEW
                 Rating = r.Star,
                 Comment = r.Comment ?? string.Empty,
                 CreatedAt = r.CreatedAt
@@ -74,6 +76,7 @@ public class ReviewService : IReviewService
 
         return reviews;
     }
+
 
     /*
     Phương thức DELETE
