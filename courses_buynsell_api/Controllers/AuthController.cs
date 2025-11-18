@@ -163,6 +163,18 @@ public class AuthController : ControllerBase
         return Ok(user);
     }
 
+    [HttpPost("resend-verification-email")]
+    public async Task<IActionResult> ResendVerificationEmail([FromBody] ResendEmailDto dto)
+    {
+        await _authService.ResendVerificationEmailAsync(dto.Email);
+
+        return Ok(new
+        {
+            message = "If the account exists and is not verified, a new verification email has been sent."
+        });
+    }
+
+
     private void SetRefreshTokenCookie(string refreshToken)
     {
         var cookieOptions = new CookieOptions

@@ -67,7 +67,7 @@ public class AuthService : IAuthService
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
 
         if (user == null || !PasswordHasher.VerifyPassword(dto.Password, user.PasswordHash))
-            throw new UnauthorizedException("Invalid credentials.");
+            throw new UnauthorizedException("Incorrect email or password.");
 
         if (!user.IsEmailVerified)
             throw new UnauthorizedException("Please verify your email first.");
@@ -82,7 +82,6 @@ public class AuthService : IAuthService
 
         if (user == null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
             throw new UnauthorizedException("Invalid or expired refresh token. Please log in again.");
-        Console.WriteLine("hehe");
         return await GenerateJwtToken(user);
     }
 
@@ -191,4 +190,23 @@ public class AuthService : IAuthService
             PhoneNumber = string.IsNullOrEmpty(user.PhoneNumber) ? "" : user.PhoneNumber
         };
     }
+
+    public async Task ResendVerificationEmailAsync(string email)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+        if (user == null) return; // Không lộ info email tồn tại hay không
+        if (user.IsEmailVerified) return; // Đã verify thì không gửi nữa
+
+        // Tạo token mới
+        var newToken = TokenHelper.GenerateRefreshToken();
+        user.EmailVerificationToken = newToken;
+        user.EmailVerificationTokenExpiry = DateTime.UtcNow.AddHours(24);
+
+        await _context.SaveChangesAsync();
+
+        // Gửi email
+        await _emailService.SendVerificationEmailAsync(user.Email, newToken);
+    }
+
 }

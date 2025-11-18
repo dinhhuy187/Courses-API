@@ -12,4 +12,6 @@ public interface IAuthService
     Task ResetPasswordAsync(string OTP, string newPassword, string email);
     Task CheckOTPAsync(string email, string OTP);
     Task<UserProfileDto> GetCurrentUserAsync(int userId);
+    Task ResendVerificationEmailAsync(string email);
+
 }
