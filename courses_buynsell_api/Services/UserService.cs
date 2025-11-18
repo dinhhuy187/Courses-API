@@ -153,7 +153,7 @@ namespace courses_buynsell_api.Services
                 PhoneNumber = request.PhoneNumber,
                 PasswordHash = PasswordHasher.HashPassword(request.Password),
                 Role = "Admin",
-                IsEmailVerified = false,
+                IsEmailVerified = true,
                 EmailVerificationToken = verificationToken,
                 EmailVerificationTokenExpiry = DateTime.UtcNow.AddHours(24),
                 CreatedAt = DateTime.UtcNow
