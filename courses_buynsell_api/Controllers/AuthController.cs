@@ -71,9 +71,44 @@ public class AuthController : ControllerBase
     [HttpGet("verify-email")]
     public async Task<IActionResult> VerifyEmail([FromQuery] string token)
     {
-        await _authService.VerifyEmailAsync(token);
-        return Ok(new { message = "Email verified successfully. You can now login." });
+        try
+        {
+            await _authService.VerifyEmailAsync(token);
+
+            // === HTML: XÁC THỰC THÀNH CÔNG ===
+            var successHtml = @"
+            <html>
+                <head>
+                    <meta charset='utf-8'>
+                    <title>Email Verified</title>
+                </head>
+                <body style='font-family: sans-serif; text-align:center; padding-top: 50px;'>
+                    <h2 style='color: #28a745;'>✔ Xác thực thành công</h2>
+                    <p>Email của bạn đã được xác thực. Bạn có thể đăng nhập ngay bây giờ.</p>
+                </body>
+            </html>";
+
+            return Content(successHtml, "text/html");
+        }
+        catch (Exception)
+        {
+            // === HTML: XÁC THỰC THẤT BẠI ===
+            var errorHtml = @"
+            <html>
+                <head>
+                    <meta charset='utf-8'>
+                    <title>Email Verification Failed</title>
+                </head>
+                <body style='font-family: sans-serif; text-align:center; padding-top: 50px;'>
+                    <h2 style='color: #d9534f;'>❌ Xác thực thất bại</h2>
+                    <p>Liên kết xác thực không hợp lệ hoặc đã hết hạn.</p>
+                </body>
+            </html>";
+
+            return Content(errorHtml, "text/html");
+        }
     }
+
 
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordDto dto)

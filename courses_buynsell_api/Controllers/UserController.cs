@@ -97,6 +97,15 @@ namespace courses_buynsell_api.Controllers
         {
             try
             {
+                int id = HttpContext.Items["UserId"] as int? ?? -1;
+                if (id == -1)
+                {
+                    return Unauthorized(new { message = "Không xác định được người dùng hiện tại." });
+                }
+                if (id == request.Id)
+                {
+                    return BadRequest(new { message = "Bạn không thể xóa chính mình." });
+                }
                 await _userService.DeleteUserAsync(request);
                 return NoContent();
             }

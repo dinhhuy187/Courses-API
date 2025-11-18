@@ -29,7 +29,8 @@ public class NotificationService : INotificationService
                 Id = n.Id,
                 Message = n.Message,
                 CreatedAt = n.CreatedAt,
-                IsRead = n.IsRead
+                IsRead = n.IsRead,
+                SellerId = n.SellerId,
             })
             .ToListAsync();
 
