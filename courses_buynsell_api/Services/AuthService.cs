@@ -187,7 +187,8 @@ public class AuthService : IAuthService
             Email = user.Email,
             FullName = user.FullName,
             Role = user.Role,
-            PhoneNumber = string.IsNullOrEmpty(user.PhoneNumber) ? "" : user.PhoneNumber
+            PhoneNumber = string.IsNullOrEmpty(user.PhoneNumber) ? "" : user.PhoneNumber,
+            Image = string.IsNullOrEmpty(user.AvatarUrl) ? "" : user.AvatarUrl
         };
     }
 
