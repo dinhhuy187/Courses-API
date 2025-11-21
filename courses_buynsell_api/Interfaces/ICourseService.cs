@@ -9,6 +9,7 @@ public interface ICourseService
     Task<CourseDetailDto?> GetByIdAsync(int id);
     Task<CourseDetailDto> CreateAsync(CreateCourseDto dto);
     Task<CourseDetailDto?> UpdateAsync(int id, UpdateCourseDto dto);
+    Task ApproveCourse(int courseId);
     Task<bool> DeleteAsync(int id);
     
     Task<CourseContentDto> AddCourseContentAsync(int courseId, CourseContentDto dto);

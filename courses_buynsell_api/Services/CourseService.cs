@@ -2,6 +2,7 @@
 using courses_buynsell_api.DTOs;
 using courses_buynsell_api.DTOs.Course;
 using courses_buynsell_api.Entities;
+using courses_buynsell_api.Exceptions;
 using courses_buynsell_api.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -271,6 +272,16 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
                 if (found != null) updateExisting(found, dto);
             }
         }
+    }
+
+    public async Task ApproveCourse(int courseId)
+    {
+        var course = await context.Courses.FindAsync(courseId);
+        if (course == null) throw new NotFoundException("Course not found");
+        if (course.IsApproved)
+            throw new InvalidOperationException("Course already approved");
+        course.IsApproved = true;
+        if (await context.SaveChangesAsync() < 1) throw new InvalidOperationException("Save changes failed");
     }
 
     public async Task<bool> DeleteAsync(int id)

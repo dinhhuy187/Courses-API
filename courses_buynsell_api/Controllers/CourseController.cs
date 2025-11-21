@@ -81,6 +81,14 @@ namespace courses_buynsell_api.Controllers
             return CreatedAtAction(nameof(GetById), new { id = courseId }, result);
         }
 
+        [HttpPut("{courseId:int}/approve")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Approve(int courseId)
+        {
+            await courseService.ApproveCourse(courseId);
+            return NoContent();
+        }
+
         [HttpDelete("{courseId:int}/skills/{skillId:int}")]
         [Authorize(Roles = "Admin, Seller")]
         public async Task<IActionResult> RemoveSkill(int courseId, int skillId)
