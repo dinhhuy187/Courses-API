@@ -146,6 +146,7 @@ CREATE TABLE IF NOT EXISTS public."Users"
     "IsEmailVerified" boolean NOT NULL DEFAULT false,
     "PasswordResetToken" character varying(200) COLLATE pg_catalog."default",
     "PasswordResetTokenExpiry" timestamp with time zone,
+    "AvatarUrl" text COLLATE pg_catalog."default",
     CONSTRAINT "PK_Users" PRIMARY KEY ("Id")
 );
 
@@ -321,24 +322,48 @@ END;
 -- INSERT USERS (Người dùng)
 -- =====================================================
 INSERT INTO public."Users" 
-("FullName", "Email", "PasswordHash", "Role", "CreatedAt", "PhoneNumber", "IsEmailVerified", "RefreshToken", "RefreshTokenExpiryTime")
+("FullName", "Email", "PasswordHash", "Role", "CreatedAt", "PhoneNumber", "IsEmailVerified", "RefreshToken", "RefreshTokenExpiryTime", "AvatarUrl")
 VALUES
--- Admin (Email đã xác nhận)
-('Nguyễn Văn Admin', 'admin@coursehub.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Admin', NOW() - INTERVAL '365 days', '0901234567', true, NULL, NULL),
+-- Admin mặc định
+('Nguyễn Văn Admin', 'admin@coursehub.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Admin', NOW() - INTERVAL '365 days', '0901234567', true, NULL, NULL,
+ 'https://cdn.tgdd.vn/Products/Images/44/335362/macbook-air-13-inch-m4-xanh-da-troi-600x600.jpg'),
 
--- Sellers (Giáo viên - một số đã xác nhận, một số chưa)
-('Trần Thị Hoa', 'hoa.tran@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Seller', NOW() - INTERVAL '200 days', '0912345678', true, NULL, NULL),
-('Lê Văn Minh', 'minh.le@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Seller', NOW() - INTERVAL '180 days', '0923456789', false, NULL, NULL),
-('Phạm Thị Lan', 'lan.pham@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Seller', NOW() - INTERVAL '150 days', '0934567890', true, NULL, NULL),
-('Hoàng Văn Nam', 'nam.hoang@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Seller', NOW() - INTERVAL '120 days', '0945678901', true, NULL, NULL),
+-- Admin mới thêm
+('Sang', 'sang@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Admin', NOW() - INTERVAL '300 days', '0900000000', true, NULL, NULL,
+ 'https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/327098/hp-15-fc0085au-r5-a6vv8pa-170225-110652-878-600x600.jpg'),
 
--- Buyers (Học viên - một số đã xác nhận, một số chưa)
-('Đỗ Văn Hùng', 'hung.do@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '100 days', '0956789012', true, NULL, NULL),
-('Vũ Thị Mai', 'mai.vu@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '90 days', '0967890123', false, NULL, NULL),
-('Bùi Văn Tuấn', 'tuan.bui@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '80 days', '0978901234', true, NULL, NULL),
-('Đinh Thị Hương', 'huong.dinh@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '70 days', '0989012345', true, NULL, NULL),
-('Ngô Văn Long', 'long.ngo@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '60 days', '0990123456', false, NULL, NULL),
-('Trương Thị Thu', 'thu.truong@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '50 days', '0901234568', true, NULL, NULL);
+-- Sellers
+('Trần Thị Hoa', 'hoa.tran@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Seller', NOW() - INTERVAL '200 days', '0912345678', true, NULL, NULL,
+ 'https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358086/macbook-pro-14-inch-m5-16gb-512gb-thumb-638962954605863722-600x600.jpg'),
+
+('Lê Văn Minh', 'minh.le@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Seller', NOW() - INTERVAL '180 days', '0923456789', false, NULL, NULL,
+ 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/a/samsung-galaxy-z-flip-7-1.jpg'),
+
+('Phạm Thị Lan', 'lan.pham@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Seller', NOW() - INTERVAL '150 days', '0934567890', true, NULL, NULL,
+ 'https://cdn.tgdd.vn/Products/Images/44/335362/macbook-air-13-inch-m4-xanh-da-troi-600x600.jpg'),
+
+('Hoàng Văn Nam', 'nam.hoang@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Seller', NOW() - INTERVAL '120 days', '0945678901', true, NULL, NULL,
+ 'https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/327098/hp-15-fc0085au-r5-a6vv8pa-170225-110652-878-600x600.jpg'),
+
+-- Buyers
+('Đỗ Văn Hùng', 'hung.do@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '100 days', '0956789012', true, NULL, NULL,
+ 'https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358086/macbook-pro-14-inch-m5-16gb-512gb-thumb-638962954605863722-600x600.jpg'),
+
+('Vũ Thị Mai', 'mai.vu@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '90 days', '0967890123', false, NULL, NULL,
+ 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/a/samsung-galaxy-z-flip-7-1.jpg'),
+
+('Bùi Văn Tuấn', 'tuan.bui@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '80 days', '0978901234', true, NULL, NULL,
+ 'https://cdn.tgdd.vn/Products/Images/44/335362/macbook-air-13-inch-m4-xanh-da-troi-600x600.jpg'),
+
+('Đinh Thị Hương', 'huong.dinh@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '70 days', '0989012345', true, NULL, NULL,
+ 'https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/327098/hp-15-fc0085au-r5-a6vv8pa-170225-110652-878-600x600.jpg'),
+
+('Ngô Văn Long', 'long.ngo@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '60 days', '0990123456', false, NULL, NULL,
+ 'https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358086/macbook-pro-14-inch-m5-16gb-512gb-thumb-638962954605863722-600x600.jpg'),
+
+('Trương Thị Thu', 'thu.truong@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '50 days', '0901234568', true, NULL, NULL,
+ 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/a/samsung-galaxy-z-flip-7-1.jpg');
+
 
 -- =====================================================
 -- INSERT CATEGORIES (Danh mục khóa học)
@@ -694,5 +719,29 @@ AFTER DELETE ON public."Reviews"
 FOR EACH ROW
 EXECUTE FUNCTION update_course_average_rating();
 
+-- Trigger để insert Enrollment
+CREATE OR REPLACE FUNCTION fn_create_enrollment_from_transactiondetail()
+RETURNS TRIGGER AS $$
+DECLARE
+    trans_record RECORD;
+BEGIN
+    -- Lấy thông tin giao dịch từ bảng Transactions
+    SELECT "BuyerId", "CreatedAt"
+    INTO trans_record
+    FROM public."Transactions"
+    WHERE "Id" = NEW."TransactionId";
+
+    -- Chèn vào bảng Enrollments
+    INSERT INTO public."Enrollments" ("EnrollAt", "BuyerId", "CourseId")
+    VALUES (trans_record."CreatedAt", trans_record."BuyerId", NEW."CourseId");
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_create_enrollment_on_transactiondetail
+AFTER INSERT ON public."TransactionDetails"
+FOR EACH ROW
+EXECUTE FUNCTION fn_create_enrollment_from_transactiondetail();
 
 
