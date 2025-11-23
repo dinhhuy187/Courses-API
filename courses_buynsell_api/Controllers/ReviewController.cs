@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace courses_buynsell_api.Controllers
 {
-    [Authorize]
     [ApiController]
     [Route("/[controller]")]
     public class ReviewController : ControllerBase
@@ -21,7 +20,6 @@ namespace courses_buynsell_api.Controllers
         /// <summary>
         /// Lấy danh sách review theo CourseId
         /// </summary>
-        [Authorize(Roles = "Admin, Buyer")]
         [HttpGet("Course/{courseId}")]
         public async Task<IActionResult> GetByCourseId(int courseId)
         {
@@ -89,6 +87,7 @@ namespace courses_buynsell_api.Controllers
 
         // Xóa comment review của Buyer
         [HttpDelete("User/{reviewId}")]
+        [Authorize(Roles = "Buyer, Admin")]
         public async Task<IActionResult> DeleteReviewByUser(int reviewId)
         {
             try
@@ -134,6 +133,7 @@ namespace courses_buynsell_api.Controllers
 
         // Update review
         [HttpPut("{reviewId}")]
+        [Authorize(Roles = "Buyer, Admin")]
         public async Task<IActionResult> UpdateReview(int reviewId, [FromBody] ReviewUpdateRequest reviewUpdateDto)
         {
             try
