@@ -33,7 +33,8 @@ namespace courses_buynsell_api.Services
                         TotalPurchased = f.Course.TotalPurchased,
                         DurationHours = f.Course.DurationHours,
                         Price = f.Course.Price,
-                        Level = f.Course.Level
+                        Level = f.Course.Level,
+                        ImageUrlUrl = f.Course.ImageUrl
                     })
                     .ToListAsync();
             }
