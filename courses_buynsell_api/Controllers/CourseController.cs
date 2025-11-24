@@ -13,19 +13,32 @@ namespace courses_buynsell_api.Controllers
     [Route("api/[controller]")]
     public class CourseController(ICourseService courseService) : ControllerBase
     {
+        [HttpGet("all")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAnonymously([FromQuery] CourseQueryParameters queryParameters)
+        {
+            if (queryParameters is { IncludeRestricted: not null, IncludeUnapproved: not null })
+                return BadRequest();
+            var result = await courseService.GetCoursesAsync(queryParameters);
+            return Ok(result);
+        }
+        
         [HttpGet]
         [Authorize(Roles = "Admin, Buyer, Seller")]
         public async Task<IActionResult> Get([FromQuery] CourseQueryParameters queryParameters)
         {
+            if (((queryParameters.IncludeRestricted ?? false) || (queryParameters.IncludeUnapproved ?? false)) 
+                && User.IsInRole("Buyer"))
+                return BadRequest("Buyer can not get restricted or unapproved courses");
             var result = await courseService.GetCoursesAsync(queryParameters);
             return Ok(result);
         }
         
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "Admin, Buyer, Seller")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetById(int id)
         {
-            var course = await courseService.GetByIdAsync(id);
+            var course = await courseService.GetByIdAsync(id,User.IsInRole("Buyer"));
             if (course == null) return NotFound();
             return Ok(course);
         }
@@ -87,6 +100,14 @@ namespace courses_buynsell_api.Controllers
         {
             await courseService.ApproveCourse(courseId);
             return NoContent();
+        }
+        
+        [HttpPut("{courseId:int}/restrict")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Restrict(int courseId)
+        {
+            var result = await courseService.RestrictCourse(courseId);
+            return Ok(result);
         }
 
         [HttpDelete("{courseId:int}/skills/{skillId:int}")]

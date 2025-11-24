@@ -13,8 +13,11 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
     public async Task<PagedResult<CourseListItemDto>> GetCoursesAsync(CourseQueryParameters q)
     {
         var query = context.Courses.AsQueryable();
-        if (!q.IncludeUnapproved)
+        if (!(q.IncludeUnapproved ?? false))
             query = query.Where(c => c.IsApproved);
+        
+        if (!(q.IncludeRestricted ?? false))
+            query = query.Where(c => !c.IsRestricted);
         
         if (q.CategoryId.HasValue)
             query = query.Where(c => c.CategoryId == q.CategoryId);
@@ -67,7 +70,9 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
                 TeacherName = c.TeacherName,
                 Description = c.Description,
                 DurationHours = c.DurationHours,
-                CategoryName = c.Category!.Name
+                CategoryName = c.Category!.Name,
+                IsApproved = c.IsApproved,
+                IsRestricted = c.IsRestricted
             })
             .ToListAsync();
         return new PagedResult<CourseListItemDto>
@@ -79,7 +84,7 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         };
     }
 
-    public async Task<CourseDetailDto?> GetByIdAsync(int id)
+    public async Task<CourseDetailDto?> GetByIdAsync(int id, bool isBuyer)
     {
         var course = await context.Courses
             .AsNoTracking()
@@ -90,6 +95,8 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
             .FirstOrDefaultAsync(c => c.Id == id);
         
         if (course == null) return null;
+
+        if (isBuyer && (!course.IsApproved || course.IsRestricted)) return null;
         
         return new CourseDetailDto
         {
@@ -108,6 +115,7 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
             IsApproved = course.IsApproved,
             CreatedAt = course.CreatedAt,
             UpdatedAt = course.UpdatedAt,
+            IsRestricted = course.IsRestricted,
             CourseContents = course.CourseContents.Select(c => new CourseContentDto{ Id = c.Id, Title = c.Title, Description = c.Description}).ToList(),
             CourseSkills = course.CourseSkills.Select(c => new SkillTargetDto{ Id = c.Id, Description = c.Name}).ToList(),
             TargetLearners = course.TargetLearners.Select(c => new SkillTargetDto{ Id = c.Id, Description = c.Description}).ToList()
@@ -128,7 +136,8 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
             SellerId = dto.SellerId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            IsApproved = false
+            IsApproved = false,
+            IsRestricted = false
         };
 
         if (dto.CourseContents != null)
@@ -163,7 +172,7 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         context.Courses.Add(entity);
         await context.SaveChangesAsync();
         
-        return await GetByIdAsync(entity.Id) ?? throw new InvalidOperationException("Created but cannot retrieve");
+        return await GetByIdAsync(entity.Id, false) ?? throw new InvalidOperationException("Created but cannot retrieve");
     }
 
     public async Task<CourseDetailDto?> UpdateAsync(int id, UpdateCourseDto dto)
@@ -225,7 +234,7 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         }
         
         await context.SaveChangesAsync();
-        return await GetByIdAsync(entity.Id);
+        return await GetByIdAsync(entity.Id, false);
     }
 
     private static void SyncChildren<TEntity, TDto>(
@@ -278,10 +287,27 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
     {
         var course = await context.Courses.FindAsync(courseId);
         if (course == null) throw new NotFoundException("Course not found");
-        if (course.IsApproved)
-            throw new InvalidOperationException("Course already approved");
+        if (course.IsApproved || course.IsRestricted)
+            throw new InvalidOperationException("Course already approved or cannot approve restricted course");
         course.IsApproved = true;
         if (await context.SaveChangesAsync() < 1) throw new InvalidOperationException("Save changes failed");
+    }
+    
+    public async Task<string> RestrictCourse(int courseId)
+    {
+        var course = await context.Courses.FindAsync(courseId);
+        if (course == null) throw new NotFoundException("Course not found");
+        if (course is { IsRestricted: false, IsApproved: false })
+            throw new InvalidOperationException("Can't restrict unapproved course");
+        if (course.IsRestricted)
+        {
+            course.IsRestricted = false;
+            if (await context.SaveChangesAsync() < 1) throw new InvalidOperationException("Save changes failed");
+            return "Course Unrestricted";
+        }
+        course.IsRestricted = true;
+        if (await context.SaveChangesAsync() < 1) throw new InvalidOperationException("Save changes failed");
+        return "Course Restricted";
     }
 
     public async Task<bool> DeleteAsync(int id)
