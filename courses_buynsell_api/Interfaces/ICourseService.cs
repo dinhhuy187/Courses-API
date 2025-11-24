@@ -8,7 +8,7 @@ public interface ICourseService
     Task<PagedResult<CourseListItemDto>> GetCoursesAsync(CourseQueryParameters query);
     Task<CourseDetailDto?> GetByIdAsync(int id, bool isBuyer);
     Task<CourseDetailDto> CreateAsync(CreateCourseDto dto);
-    Task<CourseDetailDto?> UpdateAsync(int id, UpdateCourseDto dto);
+    Task<CourseDetailDto?> UpdateAsync(int id, UpdateCourseDto dto, int SellerId);
     Task ApproveCourse(int courseId);
     Task<string> RestrictCourse(int courseId);
     Task<bool> DeleteAsync(int id);

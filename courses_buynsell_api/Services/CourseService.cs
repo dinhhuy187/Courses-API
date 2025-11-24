@@ -175,7 +175,7 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         return await GetByIdAsync(entity.Id, false) ?? throw new InvalidOperationException("Created but cannot retrieve");
     }
 
-    public async Task<CourseDetailDto?> UpdateAsync(int id, UpdateCourseDto dto)
+    public async Task<CourseDetailDto?> UpdateAsync(int id, UpdateCourseDto dto, int sellerId)
     {
         var entity = await context.Courses
             .Include(c => c.CourseContents)
@@ -184,6 +184,9 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
             .FirstOrDefaultAsync(c => c.Id == id);
 
         if (entity == null) return null;
+
+        if (entity.SellerId != sellerId)
+            throw new UnauthorizedException("Update your course only!");
 
         entity.Title = dto.Title ?? entity.Title;
         entity.Description = dto.Description ?? entity.Description;

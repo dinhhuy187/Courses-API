@@ -51,7 +51,8 @@ namespace courses_buynsell_api.Controllers
         [Authorize(Roles = "Admin, Seller")]
         public async Task<IActionResult> Update(int id, [FromForm] UpdateCourseDto updateCourseDto)
         {
-            var updated = await courseService.UpdateAsync(id, updateCourseDto);
+            var userId = int.Parse(User.FindFirst("id")!.Value);
+            var updated = await courseService.UpdateAsync(id, updateCourseDto, userId);
             if (updated == null) return NotFound();
             return Ok(updated);
         }

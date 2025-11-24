@@ -4,7 +4,7 @@ namespace courses_buynsell_api.DTOs.Course;
 
 public class UpdateCourseDto
 {
-    [Required] public string? Title { get; set; } = string.Empty;
+    public string? Title { get; set; }
     public string? Description { get; set; }
     [Range(0, double.MaxValue)] public decimal? Price { get; set; }
     public string? Level { get; set; }
