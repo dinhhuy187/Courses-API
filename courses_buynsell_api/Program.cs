@@ -13,6 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using DotNetEnv;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,29 @@ Env.Load();
 
 // 🔹 Thêm Environment Variables VÀO Configuration
 builder.Configuration.AddEnvironmentVariables();
+
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(x => x.Value!.Errors.Count > 0)
+            .ToDictionary(
+                k => k.Key,
+                v => v.Value!.Errors.Select(e => e.ErrorMessage).ToArray()
+            );
+
+        var result = new
+        {
+            success = false,
+            message = "Validation failed.",
+            errors
+        };
+
+        return new BadRequestObjectResult(result);
+    };
+});
+
 builder.Services.Configure<MomoOptions>(options =>
 {
     options.PartnerCode = Environment.GetEnvironmentVariable("MOMO_PARTNER_CODE")!;

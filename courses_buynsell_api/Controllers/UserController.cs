@@ -9,7 +9,7 @@ namespace courses_buynsell_api.Controllers
 {
     [Authorize]
     [ApiController]
-    [Route("/[controller]")]
+    [Route("/[controller]")] // http://localhost:5230/User/Detail
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;

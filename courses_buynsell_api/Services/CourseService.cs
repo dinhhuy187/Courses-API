@@ -21,13 +21,13 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         
         if (q.CategoryId.HasValue)
             query = query.Where(c => c.CategoryId == q.CategoryId);
-        
+
         if (q.SellerId.HasValue)
             query = query.Where(c => c.SellerId == q.SellerId);
-        
+
         if (!string.IsNullOrWhiteSpace(q.Level))
             query = query.Where(c => c.Level == q.Level);
-        
+
         if (q.MinPrice.HasValue)
             query = query.Where(c => c.Price >= q.MinPrice.Value);
 
@@ -38,7 +38,7 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         {
             var text = q.Q.Trim();
             query = query.Where(c =>
-                c.Title.Contains(text) || 
+                c.Title.Contains(text) ||
                 c.Description.Contains(text));
         }
 
@@ -93,7 +93,7 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
             .Include(c => c.TargetLearners)
             .Include(c => c.Category)
             .FirstOrDefaultAsync(c => c.Id == id);
-        
+
         if (course == null) return null;
 
         if (isBuyer && (!course.IsApproved || course.IsRestricted)) return null;
@@ -125,8 +125,8 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
     public async Task<CourseDetailDto> CreateAsync(CreateCourseDto dto)
     {
         var entity = new Course
-        {   
-            Title = dto.Title,  
+        {
+            Title = dto.Title,
             Description = dto.Description ?? "",
             Price = dto.Price,
             Level = dto.Level,
@@ -144,23 +144,23 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         {
             foreach (var c in dto.CourseContents)
             {
-                entity.CourseContents.Add(new CourseContent{ Title = c.Title, Description = c.Description});
+                entity.CourseContents.Add(new CourseContent { Title = c.Title, Description = c.Description });
             }
         }
-        
+
         if (dto.CourseSkills != null)
         {
             foreach (var c in dto.CourseSkills)
             {
-                entity.CourseSkills.Add(new CourseSkill{ Name = c.Description});
+                entity.CourseSkills.Add(new CourseSkill { Name = c.Description });
             }
         }
-        
+
         if (dto.TargetLearners != null)
         {
             foreach (var c in dto.TargetLearners)
             {
-                entity.TargetLearners.Add(new TargetLearner{ Description = c.Description});
+                entity.TargetLearners.Add(new TargetLearner { Description = c.Description });
             }
         }
 
@@ -168,7 +168,7 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         {
             entity.ImageUrl = await imageService.UploadImageAsync(dto.Image);
         }
-        
+
         context.Courses.Add(entity);
         await context.SaveChangesAsync();
         
@@ -182,23 +182,23 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
             .Include(c => c.CourseSkills)
             .Include(c => c.TargetLearners)
             .FirstOrDefaultAsync(c => c.Id == id);
-        
+
         if (entity == null) return null;
-        
+
         entity.Title = dto.Title ?? entity.Title;
         entity.Description = dto.Description ?? entity.Description;
         entity.Price = dto.Price ?? entity.Price;
         entity.Level = dto.Level ?? entity.Level;
         entity.TeacherName = dto.TeacherName ?? entity.TeacherName;
         entity.DurationHours = dto.DurationHours ?? entity.DurationHours;
-        entity.CategoryId = dto.CategoryId  ?? entity.CategoryId;
+        entity.CategoryId = dto.CategoryId ?? entity.CategoryId;
         entity.UpdatedAt = DateTime.UtcNow;
-        
+
         // SYNC CourseContents
         SyncChildren<CourseContent, CourseContentDto>(
             existing: entity.CourseContents,
             incoming: dto.CourseContents ?? new List<CourseContentDto>(),
-            addNew: d => new CourseContent{ Title = d.Title, Description = d.Description },
+            addNew: d => new CourseContent { Title = d.Title, Description = d.Description },
             updateExisting: (e, d) =>
             {
                 e.Title = d.Description;
@@ -206,21 +206,21 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
             },
             getId: d => d.Id
             );
-        
+
         // SYNC CourseSkills
         SyncChildren<CourseSkill, SkillTargetDto>(
             existing: entity.CourseSkills,
             incoming: dto.CourseSkills ?? new List<SkillTargetDto>(),
-            addNew: d => new CourseSkill{ Name = d.Description},
+            addNew: d => new CourseSkill { Name = d.Description },
             updateExisting: (e, d) => e.Name = d.Description,
             getId: d => d.Id
         );
-        
+
         // SYNC TargetLearners
         SyncChildren<TargetLearner, SkillTargetDto>(
             existing: entity.TargetLearners,
             incoming: dto.TargetLearners ?? new List<SkillTargetDto>(),
-            addNew: d => new TargetLearner{ Description = d.Description},
+            addNew: d => new TargetLearner { Description = d.Description },
             updateExisting: (e, d) => e.Description = d.Description,
             getId: d => d.Id
         );
@@ -229,10 +229,10 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         {
             if (!string.IsNullOrEmpty(entity.ImageUrl))
                 await imageService.DeleteImageAsync(entity.ImageUrl);
-            
+
             entity.ImageUrl = await imageService.UploadImageAsync(dto.Image);
         }
-        
+
         await context.SaveChangesAsync();
         return await GetByIdAsync(entity.Id, false);
     }
@@ -246,7 +246,7 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
     {
         var incomingList = incoming.ToList();
         var incomingIds = incomingList.Select(getId).Where(i => i != 0).ToHashSet();
-        
+
         // remove those existing whose Id not in incomingIds
         var toRemove = existing
             .Where(e =>
@@ -257,9 +257,9 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
                 return !incomingIds.Contains(val);
             })
             .ToList();
-        
+
         foreach (var r in toRemove) existing.Remove(r);
-        
+
         // update existing and add new
         foreach (var dto in incomingList)
         {
@@ -322,7 +322,7 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
     public async Task<CourseContentDto> AddCourseContentAsync(int courseId, CourseContentDto dto)
     {
         var course = await context.Courses.FindAsync(courseId) ?? throw new KeyNotFoundException("Course not found");
-        var content = new CourseContent { Title = dto.Title, Description = dto.Description, CourseId = courseId};
+        var content = new CourseContent { Title = dto.Title, Description = dto.Description, CourseId = courseId };
         context.CourseContents.Add(content);
         await context.SaveChangesAsync();
         dto.Id = content.Id;
@@ -335,13 +335,13 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         if (c == null) return false;
         context.CourseContents.Remove(c);
         await context.SaveChangesAsync();
-        return true;    
+        return true;
     }
 
     public async Task<SkillTargetDto> AddCourseSkillAsync(int courseId, SkillTargetDto dto)
     {
         var course = await context.Courses.FindAsync(courseId) ?? throw new KeyNotFoundException("Course not found");
-        var skill = new CourseSkill { Name = dto.Description, CourseId = courseId};
+        var skill = new CourseSkill { Name = dto.Description, CourseId = courseId };
         context.CourseSkills.Add(skill);
         await context.SaveChangesAsync();
         dto.Id = skill.Id;
@@ -360,11 +360,11 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
     public async Task<SkillTargetDto> AddTargetLearnerAsync(int courseId, SkillTargetDto dto)
     {
         var course = await context.Courses.FindAsync(courseId) ?? throw new KeyNotFoundException("Course not found");
-        var target = new TargetLearner { Description = dto.Description, CourseId = courseId};
+        var target = new TargetLearner { Description = dto.Description, CourseId = courseId };
         context.TargetLearners.Add(target);
         await context.SaveChangesAsync();
         dto.Id = target.Id;
-        return dto;     
+        return dto;
     }
 
     public async Task<bool> RemoveTargetLearnerAsync(int courseId, int learnerId)

@@ -6,6 +6,7 @@ using courses_buynsell_api.Helpers;
 using courses_buynsell_api.DTOs;
 using courses_buynsell_api.DTOs.Course;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.Eventing.Reader;
 
 namespace courses_buynsell_api.Services;
 
@@ -119,10 +120,17 @@ public class UserService : IUserService
                 await _imageService.DeleteImageAsync(user.AvatarUrl);
             }
 
-            // Upload avatar mới
-            var avatarUrl = await _imageService.UploadImageAsync(request.Avatar);
-            user.AvatarUrl = avatarUrl;
+                // Upload avatar mới
+                var avatarUrl = await _imageService.UploadImageAsync(request.Avatar);
+                user.AvatarUrl = avatarUrl;
         }
+        // Nếu request.Avatar là null, xóa avatar hiện tại
+        else if (!string.IsNullOrWhiteSpace(user.AvatarUrl))
+        {
+            await _imageService.DeleteImageAsync(user.AvatarUrl);
+            user.AvatarUrl = null;
+        }
+
 
         _context.Users.Update(user);
         await _context.SaveChangesAsync();

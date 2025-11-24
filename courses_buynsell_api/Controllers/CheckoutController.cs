@@ -4,10 +4,13 @@ using courses_buynsell_api.DTOs.Momo;
 using courses_buynsell_api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Filters;
+
 
 [Authorize]
 [ApiController]
 [Route("[controller]")]
+
 public class CheckoutController : ControllerBase
 {
     private readonly ICheckoutService _checkoutService;
@@ -32,4 +35,12 @@ public class CheckoutController : ControllerBase
         await _checkoutService.HandleMomoCallbackAsync(form);
         return Ok();
     }
+
+    [HttpGet("MomoConfirm")]
+    public async Task<IActionResult> Confirm([FromQuery] Dictionary<string, string> queryParams)
+    {
+        await _checkoutService.HandleMomoCallbackAsync(queryParams);
+        return Redirect("http://localhost:5173/payment-success");
+    }
+
 }

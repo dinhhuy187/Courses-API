@@ -12,7 +12,6 @@ public interface ICourseService
     Task ApproveCourse(int courseId);
     Task<string> RestrictCourse(int courseId);
     Task<bool> DeleteAsync(int id);
-    
     Task<CourseContentDto> AddCourseContentAsync(int courseId, CourseContentDto dto);
     Task<bool> RemoveCourseContentAsync(int courseId, int contentId);
     Task<SkillTargetDto> AddCourseSkillAsync(int courseId, SkillTargetDto dto);
