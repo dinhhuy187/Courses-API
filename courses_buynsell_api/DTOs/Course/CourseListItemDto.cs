@@ -14,4 +14,6 @@ public class CourseListItemDto
     public int SellerId { get; set; }
     public int DurationHours { get; set; }
     public string CategoryName { get; set; } = string.Empty;
+    public bool? IsApproved { get; set; }
+    public bool? IsRestricted { get; set; }
 }

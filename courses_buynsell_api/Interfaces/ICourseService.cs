@@ -6,10 +6,11 @@ namespace courses_buynsell_api.Interfaces;
 public interface ICourseService
 {
     Task<PagedResult<CourseListItemDto>> GetCoursesAsync(CourseQueryParameters query);
-    Task<CourseDetailDto?> GetByIdAsync(int id);
+    Task<CourseDetailDto?> GetByIdAsync(int id, bool isBuyer);
     Task<CourseDetailDto> CreateAsync(CreateCourseDto dto);
     Task<CourseDetailDto?> UpdateAsync(int id, UpdateCourseDto dto);
     Task ApproveCourse(int courseId);
+    Task<string> RestrictCourse(int courseId);
     Task<bool> DeleteAsync(int id);
     Task<CourseContentDto> AddCourseContentAsync(int courseId, CourseContentDto dto);
     Task<bool> RemoveCourseContentAsync(int courseId, int contentId);
