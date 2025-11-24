@@ -41,4 +41,5 @@ public class Course
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
     public ICollection<TargetLearner> TargetLearners { get; set; } = new List<TargetLearner>();
     public ICollection<TransactionDetail> TransactionDetails { get; set; } = new List<TransactionDetail>();
+    public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
 }

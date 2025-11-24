@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using courses_buynsell_api.DTOs.Course;
 using courses_buynsell_api.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -17,14 +13,14 @@ namespace courses_buynsell_api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetAnonymously([FromQuery] CourseQueryParameters queryParameters)
         {
-            if (queryParameters is { IncludeRestricted: not null, IncludeUnapproved: not null })
+            if (((queryParameters.IncludeRestricted ?? false) || (queryParameters.IncludeUnapproved ?? false)))
                 return BadRequest();
             var result = await courseService.GetCoursesAsync(queryParameters);
             return Ok(result);
         }
         
         [HttpGet]
-        //[Authorize(Roles = "Admin, Buyer, Seller")]
+        [Authorize(Roles = "Admin, Buyer, Seller")]
         public async Task<IActionResult> Get([FromQuery] CourseQueryParameters queryParameters)
         {
             if (((queryParameters.IncludeRestricted ?? false) || (queryParameters.IncludeUnapproved ?? false)) 

@@ -1,3 +1,4 @@
+using courses_buynsell_api.DTOs.Course;
 using courses_buynsell_api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using courses_buynsell_api.Exceptions;
@@ -232,6 +233,17 @@ namespace courses_buynsell_api.Controllers
             {
                 return StatusCode(500, new { message = ex.Message });
             }
+        }
+        
+        [HttpGet("my-courses")]
+        [Authorize(Roles = "Admin, Buyer")]
+        public async Task<IActionResult> GetCourses([FromQuery] CourseQueryParameters queryParameters)
+        {
+            var userId = int.Parse(User.FindFirst("id")!.Value);
+            if (((queryParameters.IncludeRestricted ?? false) || (queryParameters.IncludeUnapproved ?? false)))
+                return BadRequest();
+            var result = await _userService.GetMyCourses(queryParameters, userId);
+            return Ok(result);
         }
 
     }
