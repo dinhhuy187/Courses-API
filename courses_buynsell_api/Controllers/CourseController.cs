@@ -24,7 +24,7 @@ namespace courses_buynsell_api.Controllers
         }
         
         [HttpGet]
-        [Authorize(Roles = "Admin, Buyer, Seller")]
+        //[Authorize(Roles = "Admin, Buyer, Seller")]
         public async Task<IActionResult> Get([FromQuery] CourseQueryParameters queryParameters)
         {
             if (((queryParameters.IncludeRestricted ?? false) || (queryParameters.IncludeUnapproved ?? false)) 
@@ -33,7 +33,7 @@ namespace courses_buynsell_api.Controllers
             var result = await courseService.GetCoursesAsync(queryParameters);
             return Ok(result);
         }
-        
+
         [HttpGet("{id:int}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetById(int id)
@@ -68,7 +68,7 @@ namespace courses_buynsell_api.Controllers
             if (!ok) return NotFound();
             return NoContent();
         }
-        
+
         [HttpPost("{courseId:int}/contents")]
         [Authorize(Roles = "Admin, Seller")]
         public async Task<IActionResult> AddContent(int courseId, [FromBody] CourseContentDto dto)
@@ -118,7 +118,7 @@ namespace courses_buynsell_api.Controllers
             if (!ok) return NotFound();
             return NoContent();
         }
-    
+
         [HttpPost("{courseId:int}/target-learners")]
         [Authorize(Roles = "Admin, Seller")]
         public async Task<IActionResult> AddTargetLearner(int courseId, [FromBody] SkillTargetDto dto)
