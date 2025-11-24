@@ -14,6 +14,6 @@ namespace courses_buynsell_api.DTOs.Favorite
         public int DurationHours { get; set; }
         public decimal Price { get; set; }
         public string Level { get; set; } = string.Empty;
-        public string? ImageUrlUrl { get; set; }
+        public string? ImageUrl { get; set; }
     }
 }
