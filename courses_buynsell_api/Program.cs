@@ -145,6 +145,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped<IHistoryService, HistoryService>();
 
 // Đăng ký Memory Cache
 builder.Services.AddMemoryCache();
