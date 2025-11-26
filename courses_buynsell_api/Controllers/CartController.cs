@@ -1,4 +1,5 @@
 ﻿using courses_buynsell_api.DTOs.Cart;
+using courses_buynsell_api.DTOs.Course;
 using courses_buynsell_api.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -16,22 +17,15 @@ namespace courses_buynsell_api.Controllers
         {
             var userId = int.Parse(User.FindFirst("id")!.Value);
             var cart = await cartService.GetCartAsync(userId);
-            if (cart == null) return Ok(new CartDto() { UserId = userId, Items = new List<CartItemDto>() }); // return empty to frontend
             return Ok(cart);
         }
         
-        [HttpPost("items")]
+        [HttpPost("items/{courseId:int}")]
         [Authorize(Roles = "Admin, Buyer")]
-        public async Task<IActionResult> AddItem([FromBody] AddCartItemDto dto)
+        public async Task<IActionResult> AddItem(int courseId)
         {
             var userId = int.Parse(User.FindFirst("id")!.Value);
-            if (dto.UserId != null)
-            {
-                if (userId != dto.UserId)
-                    return BadRequest("UserId not match, something goes wrong");
-            }
-            else dto.UserId = userId;
-            var cart = await cartService.AddItemAsync(dto);
+            var cart = await cartService.AddItemAsync(userId, courseId);
             return Ok(cart);
         }
         
