@@ -24,7 +24,7 @@ public class CartService(AppDbContext context) : ICartService
 
         var response = cart.CartItems.Select(c => new CourseListItemDto
             {
-                Id = c.Id,
+                Id = c.Course!.Id,
                 Title = c.Course!.Title,
                 Price = c.Course!.Price,
                 Level = c.Course!.Level,
