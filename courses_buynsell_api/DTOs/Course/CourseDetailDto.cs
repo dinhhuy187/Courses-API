@@ -5,6 +5,8 @@ public class CourseDetailDto : CourseListItemDto
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public bool IsApproved { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
     
     public List<CourseContentDto>? CourseContents { get; set; }
     public List<SkillTargetDto>? CourseSkills { get; set; }

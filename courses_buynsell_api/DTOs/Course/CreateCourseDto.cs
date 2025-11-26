@@ -12,7 +12,6 @@ public class CreateCourseDto
     public IFormFile? Image { get; set; }
     public int DurationHours { get; set; }
     public int CategoryId { get; set; }
-    public int SellerId { get; set; }
     public List<CourseContentDto>? CourseContents { get; set; }
     public List<SkillTargetDto>? CourseSkills { get; set; }
     public List<SkillTargetDto>? TargetLearners { get; set; }

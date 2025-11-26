@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using courses_buynsell_api.DTOs.Course;
 using courses_buynsell_api.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -34,7 +35,7 @@ namespace courses_buynsell_api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetById(int id)
         {
-            var course = await courseService.GetByIdAsync(id,User.IsInRole("Buyer"));
+            var course = await courseService.GetByIdAsync(id,!(User.IsInRole("Admin")||User.IsInRole("Seller")));
             if (course == null) return NotFound();
             return Ok(course);
         }
@@ -43,7 +44,8 @@ namespace courses_buynsell_api.Controllers
         [Authorize(Roles = "Admin, Seller")]
         public async Task<IActionResult> Create([FromForm] CreateCourseDto createCourseDto)
         {
-            var created = await courseService.CreateAsync(createCourseDto);
+            var userId = int.Parse(User.FindFirst("id")!.Value);
+            var created = await courseService.CreateAsync(createCourseDto, userId);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 

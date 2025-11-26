@@ -92,6 +92,7 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
             .Include(c => c.CourseSkills)
             .Include(c => c.TargetLearners)
             .Include(c => c.Category)
+            .Include(c => c.Seller)
             .FirstOrDefaultAsync(c => c.Id == id);
 
         if (course == null) return null;
@@ -115,6 +116,8 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
             IsApproved = course.IsApproved,
             CreatedAt = course.CreatedAt,
             UpdatedAt = course.UpdatedAt,
+            Email = course.Seller!.Email,
+            Phone = course.Seller.PhoneNumber!,
             IsRestricted = course.IsRestricted,
             CourseContents = course.CourseContents.Select(c => new CourseContentDto{ Id = c.Id, Title = c.Title, Description = c.Description}).ToList(),
             CourseSkills = course.CourseSkills.Select(c => new SkillTargetDto{ Id = c.Id, Description = c.Name}).ToList(),
@@ -122,7 +125,7 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         };
     }
 
-    public async Task<CourseDetailDto> CreateAsync(CreateCourseDto dto)
+    public async Task<CourseDetailDto> CreateAsync(CreateCourseDto dto, int userId)
     {
         var entity = new Course
         {
@@ -133,7 +136,7 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
             TeacherName = dto.TeacherName,
             DurationHours = dto.DurationHours,
             CategoryId = dto.CategoryId,
-            SellerId = dto.SellerId,
+            SellerId = userId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             IsApproved = false,
