@@ -263,9 +263,9 @@ public class UserService : IUserService
         };
     }
 
-    public async Task<PagedResult<CourseListItemDto>> GetMyCourses(CourseQueryParameters q, int userId)
+    public async Task<PagedResult<CourseListItemUserDto>> GetMyCourses(CourseQueryParameters q, int userId)
     {
-        var buyer = await _context.Users.FindAsync(userId);
+        var buyer = await _context.Users.Include(u => u.Enrollments).FirstOrDefaultAsync(u => u.Id == userId);
         if (buyer == null)
             throw new NotFoundException("User not found.");
         var query = _context.Courses.AsQueryable();
@@ -310,7 +310,7 @@ public class UserService : IUserService
         var items = await query
             .Skip((q.Page - 1) * q.PageSize)
             .Take(q.PageSize)
-            .Select(c => new CourseListItemDto
+            .Select(c => new CourseListItemUserDto
             {
                 Id = c.Id,
                 Title = c.Title,
@@ -324,11 +324,12 @@ public class UserService : IUserService
                 Description = c.Description,
                 DurationHours = c.DurationHours,
                 CategoryName = c.Category!.Name,
+                EnrollmentDate = _context.Enrollments.Where(e => e.CourseId == c.Id && e.BuyerId == userId).Select(e => e.EnrollAt).FirstOrDefault(),
                 IsApproved = c.IsApproved,
                 IsRestricted = c.IsRestricted
             })
             .ToListAsync();
-        return new PagedResult<CourseListItemDto>
+        return new PagedResult<CourseListItemUserDto>
         {
             Page = q.Page,
             PageSize = q.PageSize,

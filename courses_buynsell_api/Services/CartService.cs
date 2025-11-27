@@ -18,7 +18,7 @@ public class CartService(AppDbContext context) : ICartService
             .AsNoTracking()
             .Include(c => c.CartItems)
             .ThenInclude(ci => ci.Course)
-            .ThenInclude(c => c.Category)
+            .ThenInclude(c => c!.Category)
             .FirstOrDefaultAsync(c => c.UserId == userId);
         if (cart == null) return new List<CourseListItemDto>();
 

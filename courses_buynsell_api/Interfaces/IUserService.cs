@@ -15,5 +15,5 @@ public interface IUserService
     Task ChangeUserPasswordAsync(ChangeUserPasswordRequest request, int userId);
     Task<PagedResult<UserListDto>> GetUsersByRoleAsync(string role, int page, int pageSize);
     Task<UserStatisticsDto> GetUserStatisticsAsync();
-    Task<PagedResult<CourseListItemDto>> GetMyCourses(CourseQueryParameters q, int userId);
+    Task<PagedResult<CourseListItemUserDto>> GetMyCourses(CourseQueryParameters q, int userId);
 }
