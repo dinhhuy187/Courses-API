@@ -230,6 +230,12 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         entity.CategoryId = dto.CategoryId ?? entity.CategoryId;
         entity.UpdatedAt = DateTime.UtcNow;
 
+        if (dto.DeleteImage && !string.IsNullOrEmpty(entity.ImageUrl))
+        {
+            await imageService.DeleteImageAsync(entity.ImageUrl);
+            entity.ImageUrl = null;
+        }
+        
         if (dto.Image != null)
         {
             if (!string.IsNullOrEmpty(entity.ImageUrl))

@@ -12,5 +12,5 @@ public class UpdateCourseDto
     public IFormFile? Image { get; set; }
     public int? DurationHours { get; set; }
     public int? CategoryId { get; set; }
-    
+    public bool DeleteImage { get; set; } = false;
 }
