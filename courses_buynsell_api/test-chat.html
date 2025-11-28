@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Chat Real-time</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .status.connected {
+            background: #10b981;
+            color: white;
+        }
+
+        .status.disconnected {
+            background: #ef4444;
+            color: white;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-form,
+        .conversation-form {
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #374151;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .conversations-list {
+            margin-top: 20px;
+        }
+
+        .conversation-item {
+            padding: 12px;
+            background: #f3f4f6;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .conversation-item:hover {
+            background: #e5e7eb;
+        }
+
+        .conversation-item.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .conversation-item h4 {
+            margin-bottom: 5px;
+        }
+
+        .conversation-item p {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .chat-area {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 180px);
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .chat-header h2 {
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .chat-header p {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f9fafb;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 15px;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.sent {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 60%;
+            padding: 12px 16px;
+            border-radius: 15px;
+            word-wrap: break-word;
+        }
+
+        .message.received .message-content {
+            background: #e5e7eb;
+            color: #1f2937;
+        }
+
+        .message.sent .message-content {
+            background: #667eea;
+            color: white;
+        }
+
+        .message-meta {
+            font-size: 11px;
+            margin-top: 5px;
+            opacity: 0.7;
+        }
+
+        .typing-indicator {
+            padding: 10px 20px;
+            font-size: 14px;
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        .chat-input {
+            padding: 20px;
+            border-top: 2px solid #e5e7eb;
+            background: white;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-container input {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .input-container button {
+            width: auto;
+            padding: 12px 30px;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #9ca3af;
+        }
+
+        .empty-state svg {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            color: #374151;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Test Chat Real-time với SignalR</h1>
+            <span class="status disconnected" id="connectionStatus">Chưa kết nối</span>
+        </div>
+
+        <div class="main-content">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Login Form -->
+                <div class="login-form" id="loginForm">
+                    <div class="section-title">Đăng nhập</div>
+                    <div class="form-group">
+                        <label>User ID (số nguyên)</label>
+                        <input type="number" id="userId" placeholder="Ví dụ: 1">
+                    </div>
+                    <div class="form-group">
+                        <label>Tên hiển thị</label>
+                        <input type="text" id="userName" placeholder="Ví dụ: Nguyễn Văn A">
+                    </div>
+                    <div class="form-group">
+                        <label>Token (nếu có)</label>
+                        <input type="text" id="accessToken" placeholder="Để trống nếu không có">
+                    </div>
+                    <div class="form-group">
+                        <label>API URL</label>
+                        <input type="text" id="apiUrl" value="http://localhost:5230"
+                            placeholder="http://localhost:5230">
+                    </div>
+                    <button onclick="connect()">Kết nối</button>
+                    <p class="info-text">💡 Mở 2 tab với 2 User ID khác nhau để test chat</p>
+                </div>
+
+                <!-- Conversation Form -->
+                <div class="conversation-form" id="conversationForm" style="display: none;">
+                    <div class="section-title">Tạo/Mở hội thoại</div>
+                    <div class="form-group">
+                        <label>Course ID</label>
+                        <input type="number" id="courseId" placeholder="Ví dụ: 1">
+                    </div>
+                    <div class="form-group">
+                        <label>Seller ID (người bán)</label>
+                        <input type="number" id="sellerId" placeholder="Ví dụ: 2">
+                    </div>
+                    <button onclick="createConversation()">Mở hội thoại</button>
+                    <p class="info-text">💡 Buyer và Seller phải là 2 user khác nhau</p>
+                </div>
+
+                <!-- Conversations List -->
+                <div class="conversations-list" id="conversationsList" style="display: none;">
+                    <div class="section-title">Danh sách hội thoại</div>
+                    <div id="conversationsContainer"></div>
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="chat-area">
+                <div class="empty-state" id="emptyState">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+                        </path>
+                    </svg>
+                    <h3>Chưa có hội thoại nào</h3>
+                    <p>Vui lòng tạo hoặc chọn một hội thoại để bắt đầu chat</p>
+                </div>
+
+                <div id="chatContainer" style="display: none; height: 100%; display: flex; flex-direction: column;">
+                    <div class="chat-header">
+                        <h2 id="chatTitle">Hội thoại</h2>
+                        <p id="chatInfo">Conversation ID: -</p>
+                    </div>
+                    <div class="messages-container" id="messagesContainer"></div>
+                    <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                        Đang gõ...
+                    </div>
+                    <div class="chat-input">
+                        <div class="input-container">
+                            <input type="text" id="messageInput" placeholder="Nhập tin nhắn..."
+                                onkeypress="handleKeyPress(event)">
+                            <button onclick="sendMessage()">Gửi</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let connection = null;
+        let currentUserId = null;
+        let currentUserName = null;
+        let currentConversationId = null;
+        let apiBaseUrl = 'http://localhost:5230';
+        let token = '';
+        let typingTimeout = null;
+
+        // Kết nối SignalR - FIX AUTHENTICATION
+        async function connect() {
+            const userIdInput = document.getElementById('userId').value;
+            const userNameInput = document.getElementById('userName').value;
+            const tokenInput = document.getElementById('accessToken').value;
+            const apiUrlInput = document.getElementById('apiUrl').value;
+
+            if (!userIdInput || !userNameInput) {
+                alert('Vui lòng nhập đầy đủ thông tin!');
+                return;
+            }
+
+            currentUserId = parseInt(userIdInput);
+            currentUserName = userNameInput;
+            token = tokenInput;
+            apiBaseUrl = apiUrlInput;
+
+            try {
+                // Tạo SignalR connection với cấu hình đúng
+                const hubUrl = `${apiBaseUrl}/chathub`;
+
+                const options = {
+                    skipNegotiation: true,
+                    transport: signalR.HttpTransportType.WebSockets
+                };
+
+                // Nếu có token, truyền qua accessTokenFactory (chuẩn SignalR)    
+                if (token && token.trim() !== '') {
+                    options.accessTokenFactory = () => token;
+                }
+
+                connection = new signalR.HubConnectionBuilder()
+                    .withUrl(hubUrl, options)
+                    .withAutomaticReconnect()
+                    .configureLogging(signalR.LogLevel.Information)
+                    .build();
+
+                // Setup reconnection handlers
+                setupReconnectionHandlers();
+
+                // Event handler - THÊM LOG
+                connection.on("ReceiveMessage", (message) => {
+                    console.log('📩 Nhận tin nhắn:', message);
+                    console.log('👤 Current user:', currentUserId);
+                    console.log('📤 Sender:', message.senderId);
+                    console.log('🎯 IsSentByCurrentUser:', message.isSentByCurrentUser); // ⭐ CHECK GIÁ TRỊ NÀY
+                    addMessageToUI(message);
+                });
+
+                connection.on("UserTypingStatus", (userId, isTyping) => {
+                    showTypingIndicator(isTyping);
+                });
+
+                connection.on("NewMessageNotification", (data) => {
+                    console.log("📬 New message notification:", data);
+                });
+
+                connection.on("MessagesMarkedAsRead", (userId, conversationId) => {
+                    console.log("✅ Messages marked as read:", userId, conversationId);
+                });
+
+                // Kết nối
+                console.log('🔄 Đang kết nối SignalR...');
+                await connection.start();
+                console.log("✅ SignalR Connected!");
+
+                // Update UI
+                document.getElementById('connectionStatus').textContent = 'Đã kết nối';
+                document.getElementById('connectionStatus').className = 'status connected';
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('conversationForm').style.display = 'block';
+
+                // Load conversations
+                await loadConversations();
+
+            } catch (error) {
+                console.error("❌ Connection error:", error);
+                document.getElementById('connectionStatus').textContent = 'Lỗi kết nối';
+                document.getElementById('connectionStatus').className = 'status disconnected';
+
+                let errorMsg = 'Không thể kết nối!\n\n';
+
+                if (error.message.includes('Không xác định được người dùng')) {
+                    errorMsg += '⚠️ LỖI XÁC THỰC:\n';
+                    errorMsg += '- Token không hợp lệ hoặc đã hết hạn\n';
+                    errorMsg += '- Backend yêu cầu token JWT hợp lệ\n';
+                    errorMsg += '- Hoặc backend chưa config CORS cho WebSocket\n\n';
+                    errorMsg += '💡 Giải pháp:\n';
+                    errorMsg += '1. Đăng nhập để lấy token mới\n';
+                    errorMsg += '2. Hoặc để trống token nếu backend không yêu cầu auth\n';
+                    errorMsg += '3. Hoặc backend cần sửa OnConnectedAsync() để cho phép test';
+                } else {
+                    errorMsg += 'Kiểm tra:\n';
+                    errorMsg += '1. Backend đã chạy chưa?\n';
+                    errorMsg += '2. URL đúng chưa?\n';
+                    errorMsg += '3. Hub path: /chathub';
+                }
+
+                errorMsg += '\n\nLỗi chi tiết: ' + error.message;
+
+                alert(errorMsg);
+            }
+        }
+
+        // Reconnection handlers - CẬP NHẬT
+        function setupReconnectionHandlers() {
+            if (!connection) return;
+
+            connection.onreconnecting(error => {
+                console.warn("🔄 SignalR reconnecting...", error);
+                document.getElementById('connectionStatus').textContent = 'Đang kết nối lại...';
+                document.getElementById('connectionStatus').className = 'status disconnected';
+            });
+
+            connection.onreconnected(connectionId => {
+                console.log("✅ SignalR reconnected!", connectionId);
+                document.getElementById('connectionStatus').textContent = 'Đã kết nối';
+                document.getElementById('connectionStatus').className = 'status connected';
+
+                // Rejoin conversation hiện tại nếu có
+                if (currentConversationId) {
+                    connection.invoke("JoinConversation", currentConversationId)
+                        .then(() => console.log("✅ Rejoined conversation"))
+                        .catch(err => console.error("❌ Rejoin error:", err));
+                }
+            });
+
+            connection.onclose(error => {
+                console.error("❌ SignalR connection closed", error);
+                document.getElementById('connectionStatus').textContent = 'Mất kết nối';
+                document.getElementById('connectionStatus').className = 'status disconnected';
+            });
+        }
+
+        // Load danh sách conversations
+        async function loadConversations() {
+            try {
+                const response = await fetch(`${apiBaseUrl}/api/chat/conversations`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const conversations = await response.json();
+                    displayConversations(conversations);
+                } else {
+                    console.error("Load conversations failed:", await response.text());
+                }
+            } catch (error) {
+                console.error("Load conversations error:", error);
+            }
+        }
+
+        // Hiển thị danh sách conversations
+        function displayConversations(conversations) {
+            const container = document.getElementById('conversationsContainer');
+            container.innerHTML = '';
+
+            if (conversations.length === 0) {
+                container.innerHTML = '<p class="info-text">Chưa có hội thoại nào</p>';
+                return;
+            }
+
+            document.getElementById('conversationsList').style.display = 'block';
+
+            conversations.forEach(conv => {
+                const div = document.createElement('div');
+                div.className = 'conversation-item';
+                div.onclick = () => openConversation(conv.id);
+
+                const otherUser = conv.buyerId === currentUserId ? conv.sellerName : conv.buyerName;
+
+                div.innerHTML = `
+                    <h4>📚 ${conv.courseTitle}</h4>
+                    <p>👤 ${otherUser}</p>
+                    ${conv.lastMessage ? `<p>💬 ${conv.lastMessage.content}</p>` : ''}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Tạo conversation mới - GIỮ NGUYÊN NHƯNG CẢI THIỆN LOG
+        async function createConversation() {
+            const courseId = parseInt(document.getElementById('courseId').value);
+            const sellerId = parseInt(document.getElementById('sellerId').value);
+
+            if (!courseId || !sellerId) {
+                alert('Vui lòng nhập đầy đủ thông tin!');
+                return;
+            }
+
+            if (currentUserId === sellerId) {
+                alert('Buyer và Seller phải khác nhau!');
+                return;
+            }
+
+            // KIỂM TRA connection
+            if (!connection) {
+                alert('⚠️ SignalR chưa được khởi tạo! Vui lòng đăng nhập lại.');
+                return;
+            }
+
+            if (connection.state !== signalR.HubConnectionState.Connected) {
+                alert('⚠️ SignalR chưa kết nối! Trạng thái: ' + connection.state + '\n\nVui lòng đợi kết nối hoàn tất hoặc thử kết nối lại.');
+                return;
+            }
+
+            console.log('📝 Creating conversation...', { courseId, sellerId, currentUserId });
+
+            try {
+                const response = await fetch(`${apiBaseUrl}/api/chat/conversations`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ courseId, sellerId })
+                });
+
+                if (response.ok) {
+                    const conversation = await response.json();
+                    console.log("✅ Conversation created/retrieved:", conversation);
+
+                    await loadConversations();
+                    await openConversation(conversation.id);
+                } else {
+                    const error = await response.json();
+                    alert('❌ Lỗi: ' + (error.message || 'Không thể tạo hội thoại'));
+                }
+            } catch (error) {
+                console.error("❌ Create conversation error:", error);
+                alert('❌ Lỗi: ' + error.message);
+            }
+        }
+
+        // Mở conversation - CHỜ CONNECTION SẴN SÀNG
+        async function openConversation(conversationId) {
+            try {
+                // Kiểm tra connection
+                if (!connection) {
+                    alert('⚠️ SignalR chưa được khởi tạo! Vui lòng đăng nhập lại.');
+                    return;
+                }
+
+                // Đợi connection sẵn sàng (có thể đang reconnect)
+                let retries = 0;
+                const maxRetries = 10; // 5 giây
+                while (connection.state !== signalR.HubConnectionState.Connected && retries < maxRetries) {
+                    console.log(`⏳ Đợi connection... (${retries + 1}/${maxRetries})`);
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    retries++;
+                }
+
+                if (connection.state !== signalR.HubConnectionState.Connected) {
+                    console.log('❌ SignalR not connected, attempting to reconnect...');
+                    try {
+                        await connection.start();
+                        console.log('✅ Reconnected successfully!');
+                    } catch (reconnectError) {
+                        alert('Không thể kết nối lại SignalR. Vui lòng refresh trang và đăng nhập lại.\n\n' + reconnectError.message);
+                        return;
+                    }
+                }
+
+                // Leave conversation cũ
+                if (currentConversationId && currentConversationId !== conversationId) {
+                    try {
+                        await connection.invoke("LeaveConversation", currentConversationId);
+                    } catch (err) {
+                        console.warn("⚠️ Leave conversation error (ignored):", err);
+                    }
+                }
+
+                currentConversationId = conversationId;
+
+                // Load messages
+                const response = await fetch(
+                    `${apiBaseUrl}/api/chat/conversations/${conversationId}/messages`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                if (response.ok) {
+                    const messages = await response.json();
+                    displayMessages(messages);
+
+                    // Update UI
+                    document.getElementById('emptyState').style.display = 'none';
+                    document.getElementById('chatContainer').style.display = 'flex';
+                    document.getElementById('chatTitle').textContent = `Hội thoại #${conversationId}`;
+                    document.getElementById('chatInfo').textContent = `Conversation ID: ${conversationId}`;
+
+                    // Mark active conversation
+                    document.querySelectorAll('.conversation-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    event?.target?.closest('.conversation-item')?.classList.add('active');
+
+                    // Join conversation
+                    console.log(`🔗 Joining conversation ${conversationId}...`);
+                    await connection.invoke("JoinConversation", conversationId);
+                    console.log(`✅ Joined conversation ${conversationId}`);
+                } else {
+                    const error = await response.text();
+                    alert('Không thể load tin nhắn: ' + error);
+                }
+            } catch (error) {
+                console.error("❌ Open conversation error:", error);
+                alert('Lỗi: ' + error.message);
+            }
+        }
+        // Hiển thị messages
+        function displayMessages(messages) {
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = '';
+
+            messages.forEach(msg => {
+                addMessageToUI(msg);
+            });
+
+            scrollToBottom();
+        }
+
+        // Thêm message vào UI
+        // Sửa hàm addMessageToUI
+        function addMessageToUI(message) {
+            const container = document.getElementById('messagesContainer');
+            const div = document.createElement('div');
+
+            // ⭐ FRONTEND TỰ TÍNH - So sánh senderId với currentUserId
+            const isSentByMe = message.senderId === currentUserId;
+
+            console.log(`Message from ${message.senderId}, current user: ${currentUserId}, isSentByMe: ${isSentByMe}`);
+
+            div.className = `message ${isSentByMe ? 'sent' : 'received'}`;
+
+            const time = new Date(message.createdAt).toLocaleTimeString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            div.innerHTML = `
+        <div class="message-content">
+            ${!isSentByMe ? `<strong>${message.senderName}</strong><br>` : ''}
+            ${message.content}
+            <div class="message-meta">${time}</div>
+        </div>
+    `;
+
+            container.appendChild(div);
+            scrollToBottom();
+        }
+
+        // Gửi message
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+
+            if (!content || !currentConversationId) return;
+
+            // Kiểm tra connection
+            if (!connection || connection.state !== signalR.HubConnectionState.Connected) {
+                alert('Mất kết nối! Đang thử kết nối lại...');
+                try {
+                    await connection.start();
+                    console.log('Reconnected!');
+                } catch (err) {
+                    alert('Không thể kết nối lại. Vui lòng refresh trang.');
+                    return;
+                }
+            }
+
+            try {
+                await connection.invoke("SendMessage", {
+                    conversationId: currentConversationId,
+                    content: content
+                });
+
+                input.value = '';
+            } catch (error) {
+                console.error("Send message error:", error);
+                alert('Lỗi gửi tin nhắn: ' + error.message);
+            }
+        }
+
+        // Handle typing
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+                return;
+            }
+
+            // Send typing indicator
+            if (connection &&
+                currentConversationId &&
+                connection.state === signalR.HubConnectionState.Connected) {
+                try {
+                    connection.invoke("UserTyping", currentConversationId, true)
+                        .catch(err => console.warn("Typing error:", err));
+
+                    clearTimeout(typingTimeout);
+                    typingTimeout = setTimeout(() => {
+                        connection.invoke("UserTyping", currentConversationId, false)
+                            .catch(err => console.warn("Typing error:", err));
+                    }, 2000);
+                } catch (err) {
+                    console.warn("Typing indicator error:", err);
+                }
+            }
+        }
+
+        // Show typing indicator
+        function showTypingIndicator(isTyping) {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.style.display = isTyping ? 'block' : 'none';
+        }
+
+        // Scroll to bottom
+        function scrollToBottom() {
+            const container = document.getElementById('messagesContainer');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Handle connection close
+        window.addEventListener('beforeunload', () => {
+            if (connection) {
+                connection.stop();
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using courses_buynsell_api.Data;
@@ -11,9 +12,11 @@ using courses_buynsell_api.Data;
 namespace courses_buynsell_api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251125015924_AddChatTables2")]
+    partial class AddChatTables2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -313,20 +316,6 @@ namespace courses_buynsell_api.Migrations
                     b.HasIndex("SenderId");
 
                     b.ToTable("Messages");
-                });
-            modelBuilder.Entity("courses_buynsell_api.Entities.History", b =>
-                {
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("CourseId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("UserId", "CourseId");
-
-                    b.HasIndex("CourseId");
-
-                    b.ToTable("Histories");
                 });
 
             modelBuilder.Entity("courses_buynsell_api.Entities.Notification", b =>
@@ -696,24 +685,6 @@ namespace courses_buynsell_api.Migrations
                     b.Navigation("Conversation");
 
                     b.Navigation("Sender");
-                });
-            modelBuilder.Entity("courses_buynsell_api.Entities.History", b =>
-                {
-                    b.HasOne("courses_buynsell_api.Entities.Course", "Course")
-                        .WithMany()
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("courses_buynsell_api.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Course");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("courses_buynsell_api.Entities.Notification", b =>

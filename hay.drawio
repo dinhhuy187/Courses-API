@@ -1,0 +1,100 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" version="29.1.1">
+  <diagram name="Fuba-BE Architecture" id="architecture">
+    <mxGraphModel dx="1281" dy="562" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="client" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1BEE7;strokeColor=#7B1FA2;strokeWidth=3;fontSize=14;fontStyle=1;" value="👤 CLIENT&lt;br&gt;HTTP Request" vertex="1">
+          <mxGeometry height="60" width="200" x="320" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="controller" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1976D2;strokeWidth=4;fontSize=14;fontStyle=1;" value="📡 CONTROLLER&lt;br&gt;Nhận request &amp; trả response" vertex="1">
+          <mxGeometry height="60" width="200" x="320" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="service" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1976D2;strokeWidth=4;fontSize=14;fontStyle=1;" value="⚙️ SERVICE&lt;br&gt;Xử lý business logic" vertex="1">
+          <mxGeometry height="60" width="200" x="320" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="repository" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1976D2;strokeWidth=4;fontSize=14;fontStyle=1;" value="💾 REPOSITORY&lt;br&gt;Thao tác database" vertex="1">
+          <mxGeometry height="60" width="200" x="320" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="database" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#FFCDD2;strokeColor=#C62828;strokeWidth=3;fontSize=14;fontStyle=1;" value="🗄️ DATABASE" vertex="1">
+          <mxGeometry height="80" width="140" x="350" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="dto" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F9A825;strokeWidth=2;fontSize=12;" value="📦 DTO&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Request/Response objects&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="160" x="60" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="domain" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F9A825;strokeWidth=2;fontSize=12;" value="🎯 Domain&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Entity models (JPA)&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="160" x="60" y="285" as="geometry" />
+        </mxCell>
+        <mxCell id="mapper" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F9A825;strokeWidth=2;fontSize=12;" value="🔄 Mapper&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Convert Entity ↔ DTO&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="160" x="60" y="355" as="geometry" />
+        </mxCell>
+        <mxCell id="config" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F9A825;strokeWidth=2;fontSize=12;" value="⚙️ Config&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Bean, Security, Database&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="160" x="640" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="exception" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F9A825;strokeWidth=2;fontSize=12;" value="⚠️ Exception&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Global error handler&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="160" x="780" y="235" as="geometry" />
+        </mxCell>
+        <mxCell id="util" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F9A825;strokeWidth=2;fontSize=12;" value="🔧 Util&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Helper functions&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="160" x="640" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow1" edge="1" parent="1" source="client" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#1976D2;strokeWidth=3;fontSize=12;fontColor=#1976D2;fontStyle=1;" target="controller" value="Request">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow2" edge="1" parent="1" source="controller" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#1976D2;strokeWidth=3;fontSize=12;fontColor=#1976D2;fontStyle=1;" target="service" value="Call">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow3" edge="1" parent="1" source="service" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#1976D2;strokeWidth=3;fontSize=12;fontColor=#1976D2;fontStyle=1;" target="repository" value="Query">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow4" edge="1" parent="1" source="repository" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#1976D2;strokeWidth=3;fontSize=12;fontColor=#1976D2;fontStyle=1;" target="database" value="Execute">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="support1" edge="1" parent="1" source="dto" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F9A825;strokeWidth=2;dashed=1;dashPattern=5 5;" target="controller" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="support2" edge="1" parent="1" source="domain" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F9A825;strokeWidth=2;dashed=1;dashPattern=5 5;" target="service" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="support3" edge="1" parent="1" source="mapper" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F9A825;strokeWidth=2;dashed=1;dashPattern=5 5;" target="service" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="support4" edge="1" parent="1" source="domain" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F9A825;strokeWidth=2;dashed=1;dashPattern=5 5;" target="repository" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="140" y="430" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="support5" edge="1" parent="1" source="config" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F9A825;strokeWidth=2;dashed=1;dashPattern=5 5;" target="controller" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="support6" edge="1" parent="1" source="config" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F9A825;strokeWidth=2;dashed=1;dashPattern=5 5;" target="service" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="700" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="support7" edge="1" parent="1" source="exception" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F9A825;strokeWidth=2;dashed=1;dashPattern=5 5;" target="controller" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="600" y="250" />
+              <mxPoint x="600" y="190" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="support8" edge="1" parent="1" source="exception" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F9A825;strokeWidth=2;dashed=1;dashPattern=5 5;" target="service" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="600" y="250" />
+              <mxPoint x="600" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="support9" edge="1" parent="1" source="util" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F9A825;strokeWidth=2;dashed=1;dashPattern=5 5;" target="service" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
