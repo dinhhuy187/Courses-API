@@ -79,6 +79,16 @@ namespace courses_buynsell_api.Controllers
             return NoContent();
         }
 
+        [HttpDelete("images/{courseId:int}")]
+        [Authorize(Roles = "Admin, Seller")]
+        public async Task<IActionResult> DeleteImage(int courseId)
+        {
+            var userId = int.Parse(User.FindFirst("id")!.Value);
+            var result = await courseService.DeleteImageAsync(courseId, userId);
+            if (!result) return NotFound();
+            return NoContent();
+        }
+
         [HttpPost("{courseId:int}/contents")]
         [Authorize(Roles = "Admin, Seller")]
         public async Task<IActionResult> AddContent(int courseId, [FromBody] CourseContentDto dto)

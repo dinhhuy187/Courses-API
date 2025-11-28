@@ -51,7 +51,11 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
             _ => query.OrderByDescending(c => c.CreatedAt)
         };
 
-        query = query.Include(c => c.Category);
+        query = query
+            .Include(c => c.Category)
+            .Include(c => c.CourseContents)
+            .Include(c => c.CourseSkills)
+            .Include(c => c.TargetLearners);
 
         var total = await query.LongCountAsync();
         var items = await query
@@ -72,7 +76,11 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
                 DurationHours = c.DurationHours,
                 CategoryName = c.Category!.Name,
                 IsApproved = c.IsApproved,
-                IsRestricted = c.IsRestricted
+                IsRestricted = c.IsRestricted,
+                CommentCount = c.Enrollments.Count,
+                CourseContents = c.CourseContents.Select(c => new CourseContentDto{ Id = c.Id, Title = c.Title, Description = c.Description ?? ""}).ToList(),
+                CourseSkills = c.CourseSkills.Select(c => new SkillTargetDto{ Id = c.Id, Description = c.Name}).ToList(),
+                TargetLearners = c.TargetLearners.Select(c => new SkillTargetDto{ Id = c.Id, Description = c.Description}).ToList()
             })
             .ToListAsync();
         return new PagedResult<CourseListItemDto>
@@ -206,9 +214,6 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
     public async Task<CourseDetailDto?> UpdateAsync(int id, UpdateCourseDto dto, int sellerId)
     {
         var entity = await context.Courses
-            .Include(c => c.CourseContents)
-            .Include(c => c.CourseSkills)
-            .Include(c => c.TargetLearners)
             .FirstOrDefaultAsync(c => c.Id == id);
 
         if (entity == null) return null;
@@ -225,37 +230,6 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         entity.CategoryId = dto.CategoryId ?? entity.CategoryId;
         entity.UpdatedAt = DateTime.UtcNow;
 
-        // SYNC CourseContents
-        // SyncChildren<CourseContent, CourseContentDto>(
-        //     existing: entity.CourseContents,
-        //     incoming: dto.CourseContents ?? new List<CourseContentDto>(),
-        //     addNew: d => new CourseContent { Title = d.Title, Description = d.Description },
-        //     updateExisting: (e, d) =>
-        //     {
-        //         e.Title = d.Description;
-        //         e.Description = d.Description;
-        //     },
-        //     getId: d => d.Id
-        //     );
-        //
-        // // SYNC CourseSkills
-        // SyncChildren<CourseSkill, SkillTargetDto>(
-        //     existing: entity.CourseSkills,
-        //     incoming: dto.CourseSkills ?? new List<SkillTargetDto>(),
-        //     addNew: d => new CourseSkill { Name = d.Description },
-        //     updateExisting: (e, d) => e.Name = d.Description,
-        //     getId: d => d.Id
-        // );
-        //
-        // // SYNC TargetLearners
-        // SyncChildren<TargetLearner, SkillTargetDto>(
-        //     existing: entity.TargetLearners,
-        //     incoming: dto.TargetLearners ?? new List<SkillTargetDto>(),
-        //     addNew: d => new TargetLearner { Description = d.Description },
-        //     updateExisting: (e, d) => e.Description = d.Description,
-        //     getId: d => d.Id
-        // );
-
         if (dto.Image != null)
         {
             if (!string.IsNullOrEmpty(entity.ImageUrl))
@@ -266,52 +240,6 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
 
         await context.SaveChangesAsync();
         return await GetByIdAsync(entity.Id, false);
-    }
-
-    private static void SyncChildren<TEntity, TDto>(
-        ICollection<TEntity> existing,
-        IEnumerable<TDto> incoming,
-        Func<TDto, TEntity> addNew,
-        Action<TEntity, TDto> updateExisting,
-        Func<TDto, int> getId) where TEntity : class
-    {
-        var incomingList = incoming.ToList();
-        var incomingIds = incomingList.Select(getId).Where(i => i != 0).ToHashSet();
-
-        // remove those existing whose Id not in incomingIds
-        var toRemove = existing
-            .Where(e =>
-            {
-                var prop = e.GetType().GetProperty("Id");
-                if (prop == null) return false;
-                var val = (int)prop.GetValue(e)!;
-                return !incomingIds.Contains(val);
-            })
-            .ToList();
-
-        foreach (var r in toRemove) existing.Remove(r);
-
-        // update existing and add new
-        foreach (var dto in incomingList)
-        {
-            var id = getId(dto);
-            if (id == 0)
-            {
-                existing.Add(addNew(dto));
-            }
-            else
-            {
-                // find existing by Id and update
-                var found = existing.FirstOrDefault(e =>
-                {
-                    var prop = e.GetType().GetProperty("Id");
-                    if (prop == null) return false;
-                    var val = (int)prop.GetValue(e)!;
-                    return val == id;
-                });
-                if (found != null) updateExisting(found, dto);
-            }
-        }
     }
 
     public async Task ApproveCourse(int courseId)
@@ -346,6 +274,17 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         var entity = await context.Courses.FirstOrDefaultAsync(x => x.Id == id);
         if (entity == null) return false;
         context.Courses.Remove(entity);
+        await context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteImageAsync(int courseId, int userId)
+    {
+        var entity = await context.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
+        if (entity == null || entity.SellerId != userId || string.IsNullOrEmpty(entity.ImageUrl))
+            return false;
+        await imageService.DeleteImageAsync(entity.ImageUrl);
+        entity.ImageUrl = null;
         await context.SaveChangesAsync();
         return true;
     }
