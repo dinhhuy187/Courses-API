@@ -15,5 +15,6 @@ namespace courses_buynsell_api.DTOs.Favorite
         public decimal Price { get; set; }
         public string Level { get; set; } = string.Empty;
         public string? ImageUrl { get; set; }
+        public string CategoryName { get; set; } = string.Empty;
     }
 }
