@@ -22,6 +22,7 @@ namespace courses_buynsell_api.Services
                 return await _context.Favorites
                     .Where(f => f.UserId == userId)
                     .Include(f => f.Course)
+                    .Include(f => f.Course!.Category)
                     .Select(f => new FavoriteCourseResponse
                     {
                         UserId = f.UserId,
@@ -34,7 +35,8 @@ namespace courses_buynsell_api.Services
                         DurationHours = f.Course.DurationHours,
                         Price = f.Course.Price,
                         Level = f.Course.Level,
-                        ImageUrl = f.Course.ImageUrl
+                        ImageUrl = f.Course.ImageUrl,
+                        CategoryName = f.Course.Category!.Name
                     })
                     .ToListAsync();
             }

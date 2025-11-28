@@ -46,6 +46,10 @@ namespace courses_buynsell_api.Controllers
             try
             {
                 int id = HttpContext.Items["UserId"] as int? ?? -1;
+                if (id == -1)
+                {
+                    return Unauthorized(new { message = "Không xác định được người dùng hiện tại." });
+                }
                 var user = await _userService.GetUserByIdAsync(id);
                 return Ok(user);
             }
@@ -68,7 +72,7 @@ namespace courses_buynsell_api.Controllers
         }
 
         // GET: /User/{id}
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin, Seller")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUserByIdAdmin(int id)
         {
@@ -133,6 +137,10 @@ namespace courses_buynsell_api.Controllers
             try
             {
                 int id = HttpContext.Items["UserId"] as int? ?? -1;
+                if (id == -1)
+                {
+                    return Unauthorized(new { message = "Không xác định được người dùng hiện tại." });
+                }
                 var updatedUser = await _userService.UpdateUserAsync(id, request);
                 return Ok(updatedUser);
             }
@@ -177,6 +185,10 @@ namespace courses_buynsell_api.Controllers
             try
             {
                 int id = HttpContext.Items["UserId"] as int? ?? -1;
+                if (id == -1)
+                {
+                    return Unauthorized(new { message = "Không xác định được người dùng hiện tại." });
+                }
                 await _userService.ChangeUserPasswordAsync(request, id);
                 return NoContent();
             }
@@ -234,7 +246,7 @@ namespace courses_buynsell_api.Controllers
                 return StatusCode(500, new { message = ex.Message });
             }
         }
-        
+
         [HttpGet("my-courses")]
         [Authorize(Roles = "Admin, Buyer")]
         public async Task<IActionResult> GetCourses([FromQuery] CourseQueryParameters queryParameters)

@@ -184,6 +184,7 @@ public class AuthService : IAuthService
         {
             Token = new JwtSecurityTokenHandler().WriteToken(token),
             RefreshToken = refreshToken,
+            Id = user.Id,
             Email = user.Email,
             FullName = user.FullName,
             Role = user.Role,
