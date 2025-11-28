@@ -71,7 +71,12 @@ var jwtSettings = new JwtSettings
 };
 
 // Đăng ký SignalR
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true; // Bật để debug dễ hơn
+    options.KeepAliveInterval = TimeSpan.FromSeconds(10);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+});
 
 // Cấu hình CORS để frontend có thể kết nối SignalR
 builder.Services.AddCors(options =>
@@ -82,7 +87,8 @@ builder.Services.AddCors(options =>
                 "http://localhost:3000",
                 "http://localhost:5173",
                 "http://127.0.0.1:5500",
-                "http://localhost:5500"
+                "http://localhost:5500",
+                "null" // Thêm để support file:// protocol khi test HTML
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
@@ -128,6 +134,26 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = jwtSettings.Audience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
         };
+
+        // ⭐⭐⭐ QUAN TRỌNG: Thêm phần này để SignalR nhận JWT token ⭐⭐⭐
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                // SignalR gửi token qua query string thay vì header
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+
+                // Nếu request đến ChatHub hoặc NotificationHub, lấy token từ query
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    (path.StartsWithSegments("/chatHub") ||
+                     path.StartsWithSegments("/notificationHub")))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 
 // 🔹 Services
@@ -146,6 +172,9 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IHistoryService, HistoryService>();
+
+// ⭐ Thêm ChatService - QUAN TRỌNG!
+builder.Services.AddScoped<IChatService, ChatService>();
 
 // Đăng ký Memory Cache
 builder.Services.AddMemoryCache();
@@ -171,13 +200,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 // Sử dụng CORS
-app.UseCors("AllowAll");
+app.UseCors("AllowAll");              // 1. CORS trước tiên
+
+app.UseAuthentication();              // 2. Authentication (JWT)
+app.UseAuthorization();               // 3. Authorization
 // thêm middleware JWT
 app.UseMiddleware<JwtMiddleware>();
 app.UseErrorHandling();
-app.UseAuthentication();
-app.UseAuthorization();
 // Map SignalR Hub
-app.MapHub<NotificationHub>("/notificationHub");
 app.MapControllers();
+app.MapHub<NotificationHub>("/notificationHub");
+app.MapHub<ChatHub>("/chathub");
 app.Run();

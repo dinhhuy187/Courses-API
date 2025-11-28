@@ -196,6 +196,38 @@
             width: auto;
             cursor: pointer;
         }
+
+        .token-info {
+            background: #e8f5e9;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #2e7d32;
+            border-left: 4px solid #4caf50;
+        }
+
+        .error-info {
+            background: #ffebee;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #c62828;
+            border-left: 4px solid #f44336;
+        }
+
+        .debug-info {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 12px;
+            color: #1565c0;
+            border-left: 4px solid #2196f3;
+            max-height: 200px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 
@@ -204,8 +236,10 @@
         <h1>🔔 Test Real-time Notification</h1>
 
         <div id="status" class="status connecting">
-            🔄 Đang kết nối...
+            🔄 Đang chờ kết nối...
         </div>
+
+        <div id="tokenInfo" style="display: none;"></div>
 
         <div class="input-group">
             <label for="apiUrl">URL API Backend:</label>
@@ -213,8 +247,15 @@
         </div>
 
         <div class="input-group">
-            <label for="sellerId">Seller ID:</label>
-            <input type="number" id="sellerId" value="1" placeholder="Nhập ID seller">
+            <label for="sellerId">Seller ID (Integer):</label>
+            <input type="number" id="sellerId" value="1" placeholder="Nhập ID seller (số nguyên)" min="1" step="1">
+            <small style="color: #999;">Phải là số nguyên dương (ví dụ: 1, 2, 3...)</small>
+        </div>
+
+        <div class="input-group">
+            <label for="authToken">JWT Token:</label>
+            <input type="text" id="authToken" placeholder="Dán JWT token vào đây">
+            <small style="color: #999;">Token sẽ được gửi qua Authorization header (an toàn)</small>
         </div>
 
         <div class="sound-toggle">
@@ -241,9 +282,13 @@
                 Chưa có thông báo nào
             </div>
         </div>
+
+        <div id="debugInfo" class="debug-info" style="display: none;">
+            <strong>Debug Log:</strong>
+            <div id="debugLog"></div>
+        </div>
     </div>
 
-    <!-- SignalR Library từ CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
 
     <script>
@@ -251,59 +296,215 @@
         let isConnected = false;
         const notifications = [];
 
-        // Kết nối SignalR
-        async function connectSignalR() {
-            const apiUrl = document.getElementById('apiUrl').value;
-            const sellerId = document.getElementById('sellerId').value;
+        // Debug logging
+        function logDebug(message, data = null) {
+            const debugLog = document.getElementById('debugLog');
+            const debugInfo = document.getElementById('debugInfo');
+            const timestamp = new Date().toLocaleTimeString('vi-VN');
 
-            if (!sellerId) {
-                alert('Vui lòng nhập Seller ID!');
+            const logEntry = document.createElement('div');
+            logEntry.textContent = `[${timestamp}] ${message}${data ? ': ' + JSON.stringify(data) : ''}`;
+            debugLog.appendChild(logEntry);
+            debugInfo.style.display = 'block';
+
+            console.log(`[${timestamp}] ${message}`, data || '');
+        }
+
+        // Validate JWT token format
+        function validateToken(token) {
+            if (!token || token.trim() === '') {
+                return { valid: false, error: 'Token trống' };
+            }
+
+            const parts = token.split('.');
+            if (parts.length !== 3) {
+                return { valid: false, error: 'Token không đúng định dạng JWT (phải có 3 phần)' };
+            }
+
+            try {
+                const payload = JSON.parse(atob(parts[1]));
+                const now = Math.floor(Date.now() / 1000);
+
+                if (payload.exp && payload.exp < now) {
+                    return { valid: false, error: 'Token đã hết hạn' };
+                }
+
+                // Kiểm tra userId claim
+                const userId = payload.nameid || payload.sub || payload.id || payload.unique_name;
+                logDebug('Token payload claims', {
+                    nameid: payload.nameid,
+                    sub: payload.sub,
+                    id: payload.id,
+                    unique_name: payload.unique_name,
+                    role: payload.role
+                });
+
+                return {
+                    valid: true,
+                    payload: payload,
+                    userId: userId,
+                    expires: payload.exp ? new Date(payload.exp * 1000).toLocaleString('vi-VN') : 'N/A'
+                };
+            } catch (error) {
+                return { valid: false, error: 'Không thể decode token: ' + error.message };
+            }
+        }
+
+        // Validate sellerId
+        function validateSellerId(sellerId) {
+            const id = parseInt(sellerId, 10);
+
+            if (isNaN(id)) {
+                return { valid: false, error: 'Seller ID phải là số nguyên', value: null };
+            }
+
+            if (id <= 0) {
+                return { valid: false, error: 'Seller ID phải là số dương', value: null };
+            }
+
+            if (!Number.isInteger(id)) {
+                return { valid: false, error: 'Seller ID phải là số nguyên (không có phần thập phân)', value: null };
+            }
+
+            return { valid: true, value: id };
+        }
+
+        // Hiển thị thông tin token
+        function showTokenInfo(validation) {
+            const infoEl = document.getElementById('tokenInfo');
+
+            if (validation.valid) {
+                infoEl.className = 'token-info';
+                infoEl.innerHTML = `
+                    ✅ Token hợp lệ<br>
+                    👤 User ID: ${validation.userId || 'N/A'}<br>
+                    👤 Username: ${validation.payload.unique_name || validation.payload.name || 'N/A'}<br>
+                    🎭 Role: ${validation.payload.role || 'N/A'}<br>
+                    ⏰ Hết hạn: ${validation.expires}
+                `;
+            } else {
+                infoEl.className = 'error-info';
+                infoEl.innerHTML = `❌ ${validation.error}`;
+            }
+
+            infoEl.style.display = 'block';
+        }
+
+        // Kết nối SignalR với authentication đúng cách
+        async function connectSignalR() {
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            const sellerIdInput = document.getElementById('sellerId').value.trim();
+            const token = document.getElementById('authToken').value.trim();
+
+            // Validate sellerId
+            const sellerIdValidation = validateSellerId(sellerIdInput);
+            if (!sellerIdValidation.valid) {
+                alert(`❌ ${sellerIdValidation.error}\n\nVui lòng nhập một số nguyên dương (ví dụ: 1, 2, 3...)`);
+                return;
+            }
+            const sellerId = sellerIdValidation.value;
+            logDebug('Validated Seller ID', { input: sellerIdInput, parsed: sellerId, type: typeof sellerId });
+
+            // Validate token
+            const tokenValidation = validateToken(token);
+            showTokenInfo(tokenValidation);
+
+            if (!tokenValidation.valid) {
+                alert(`❌ Token không hợp lệ: ${tokenValidation.error}`);
                 return;
             }
 
             updateStatus('connecting', '🔄 Đang kết nối...');
 
             try {
-                // Tạo connection
                 connection = new signalR.HubConnectionBuilder()
                     .withUrl(`${apiUrl}/notificationHub`, {
+                        accessTokenFactory: () => token,
                         skipNegotiation: true,
                         transport: signalR.HttpTransportType.WebSockets
                     })
-                    .withAutomaticReconnect()
+                    .withAutomaticReconnect({
+                        nextRetryDelayInMilliseconds: retryContext => {
+                            if (retryContext.previousRetryCount === 0) return 0;
+                            if (retryContext.previousRetryCount === 1) return 2000;
+                            if (retryContext.previousRetryCount === 2) return 10000;
+                            return 30000;
+                        }
+                    })
+                    .configureLogging(signalR.LogLevel.Information)
                     .build();
 
-                // Lắng nghe event nhận thông báo mới
+                // Event handlers
+                connection.onreconnecting(error => {
+                    logDebug('Đang thử kết nối lại', error?.message);
+                    updateStatus('connecting', '🔄 Đang kết nối lại...');
+                });
+
+                connection.onreconnected(connectionId => {
+                    logDebug('Đã kết nối lại', { connectionId });
+                    updateStatus('connected', '✅ Đã kết nối lại thành công!');
+                });
+
+                connection.onclose(error => {
+                    logDebug('Kết nối đã đóng', error?.message);
+                    isConnected = false;
+                    updateStatus('disconnected', '❌ Kết nối đã đóng');
+                });
+
+                // Lắng nghe các event từ server
                 connection.on('ReceiveNotification', (notification) => {
-                    console.log('📩 Nhận thông báo:', notification);
+                    logDebug('Nhận thông báo', notification);
                     addNotification(notification);
                     playSound();
                 });
 
-                // Lắng nghe event cập nhật số lượng chưa đọc
                 connection.on('UpdateUnreadCount', (count) => {
-                    console.log('🔢 Số chưa đọc:', count);
+                    logDebug('Số chưa đọc', count);
                     updateUnreadBadge(count);
+                });
+
+                connection.on('JoinedGroup', (data) => {
+                    logDebug('Joined group response', data);
+                    alert(`✅ Đã join vào group: ${data.groupName}`);
+                });
+
+                connection.on('ConnectionInfo', (info) => {
+                    logDebug('Connection info', info);
                 });
 
                 // Bắt đầu kết nối
                 await connection.start();
-                console.log('✅ SignalR Connected');
+                logDebug('SignalR Connected', { connectionId: connection.connectionId });
 
-                // Join vào group của seller
-                await connection.invoke('JoinSellerGroup', sellerId);
-                console.log(`✅ Joined seller group: ${sellerId}`);
+                // Join vào group của seller - GỬI INT
+                logDebug('Calling JoinSellerGroup', { sellerId, type: typeof sellerId });
+                await connection.invoke('JoinSellerGroup', sellerId); // Đảm bảo gửi int
+                logDebug('Successfully joined seller group', { sellerId });
 
                 isConnected = true;
-                updateStatus('connected', '✅ Đã kết nối thành công!');
+                updateStatus('connected', `✅ Đã kết nối và join group seller_${sellerId}!`);
 
                 // Load thông báo có sẵn
-                await loadExistingNotifications(sellerId);
+                await loadExistingNotifications(sellerId, token);
 
             } catch (error) {
+                logDebug('Lỗi kết nối', error.message);
                 console.error('❌ Lỗi kết nối:', error);
-                updateStatus('disconnected', `❌ Lỗi: ${error.message}`);
-                alert('Không thể kết nối! Kiểm tra:\n1. Backend đã chạy chưa?\n2. URL đúng chưa?\n3. CORS đã cấu hình chưa?');
+
+                let errorMsg = '❌ Lỗi: ';
+                if (error.toString().includes('401') || error.toString().includes('Unauthorized')) {
+                    errorMsg += 'Token không hợp lệ hoặc đã hết hạn';
+                } else if (error.toString().includes('403') || error.toString().includes('Forbidden')) {
+                    errorMsg += 'Không có quyền truy cập';
+                } else if (error.message) {
+                    errorMsg += error.message;
+                } else {
+                    errorMsg += 'Không thể kết nối';
+                }
+
+                updateStatus('disconnected', errorMsg);
+
+                alert(`Không thể kết nối!\n\n${errorMsg}\n\nKiểm tra:\n1. Backend đã chạy chưa?\n2. Token còn hạn chưa?\n3. CORS đã cấu hình đúng chưa?\n4. JWT authentication đã được cấu hình trong backend chưa?\n5. Seller ID đúng định dạng số nguyên chưa?`);
             }
         }
 
@@ -313,50 +514,75 @@
                 await connection.stop();
                 isConnected = false;
                 updateStatus('disconnected', '⚠️ Đã ngắt kết nối');
-                console.log('Disconnected');
+                logDebug('Disconnected');
             }
         }
 
         // Gửi thông báo test
         async function sendTestNotification() {
-            const apiUrl = document.getElementById('apiUrl').value;
-            const sellerId = document.getElementById('sellerId').value;
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            const sellerIdInput = document.getElementById('sellerId').value.trim();
+            const token = document.getElementById('authToken').value.trim();
 
             if (!isConnected) {
                 alert('Vui lòng kết nối SignalR trước!');
                 return;
             }
 
+            // Validate sellerId
+            const sellerIdValidation = validateSellerId(sellerIdInput);
+            if (!sellerIdValidation.valid) {
+                alert(`❌ ${sellerIdValidation.error}`);
+                return;
+            }
+            const sellerId = sellerIdValidation.value;
+
             try {
+                const payload = {
+                    message: `🎉 Test thông báo lúc ${new Date().toLocaleTimeString('vi-VN')}`,
+                    sellerId: sellerId // Gửi int
+                };
+
+                logDebug('Sending test notification', payload);
+
                 const response = await fetch(`${apiUrl}/notification`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({
-                        message: `🎉 Test thông báo lúc ${new Date().toLocaleTimeString('vi-VN')}`,
-                        sellerId: parseInt(sellerId)
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
-                    console.log('✅ Đã gửi thông báo test');
+                    logDebug('Test notification sent successfully');
+                    alert('✅ Đã gửi thông báo test!');
                 } else {
-                    alert('Lỗi gửi thông báo: ' + response.status);
+                    const errorText = await response.text();
+                    logDebug('Error sending notification', { status: response.status, error: errorText });
+                    alert(`Lỗi gửi thông báo: ${response.status}\n${errorText}`);
                 }
             } catch (error) {
+                logDebug('Exception sending notification', error.message);
                 console.error('❌ Lỗi:', error);
                 alert('Không thể gửi thông báo! Kiểm tra API endpoint.');
             }
         }
 
         // Load thông báo có sẵn
-        async function loadExistingNotifications(sellerId) {
-            const apiUrl = document.getElementById('apiUrl').value;
+        async function loadExistingNotifications(sellerId, token) {
+            const apiUrl = document.getElementById('apiUrl').value.trim();
             try {
-                const response = await fetch(`${apiUrl}/notification/${sellerId}`);
+                logDebug('Loading existing notifications', { sellerId });
+                const response = await fetch(`${apiUrl}/notification/${sellerId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
                 if (response.ok) {
                     const data = await response.json();
+                    logDebug('Loaded notifications', { count: data.length });
                     notifications.length = 0;
                     notifications.push(...data);
                     renderNotifications();
@@ -365,6 +591,7 @@
                     updateUnreadBadge(unreadCount);
                 }
             } catch (error) {
+                logDebug('Error loading notifications', error.message);
                 console.error('Không thể load thông báo:', error);
             }
         }
@@ -415,7 +642,6 @@
         function playSound() {
             if (!document.getElementById('soundEnabled').checked) return;
 
-            // Tạo âm thanh đơn giản bằng Web Audio API
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
@@ -432,9 +658,9 @@
             oscillator.stop(audioContext.currentTime + 0.3);
         }
 
-        // Tự động kết nối khi load trang
         window.addEventListener('load', () => {
-            console.log('🚀 Trang đã load. Nhấn "Kết nối SignalR" để bắt đầu!');
+            logDebug('Page loaded');
+            console.log('🚀 Trang đã load. Nhập token và seller ID (số nguyên) rồi nhấn "Kết nối SignalR"!');
         });
     </script>
 </body>
