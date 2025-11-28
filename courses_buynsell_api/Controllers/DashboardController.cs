@@ -28,7 +28,7 @@ public class DashboardController : ControllerBase
 
     // Thống kê số lượt giao dịch hàng tháng của seller
     [HttpGet("monthly/buyer")]
-    [Authorize(Roles = "Seller")]
+    [Authorize(Roles = "Seller, Admin")]
     public async Task<ActionResult<List<MonthlyBuyerStatsDto>>> GetMonthlyBuyerStats()
     {
         int sellerId = HttpContext.Items["UserId"] as int? ?? -1;
@@ -42,7 +42,7 @@ public class DashboardController : ControllerBase
 
     //Thống kê theo danh mục của seller
     [HttpGet("category/course")]
-    [Authorize(Roles = "Seller")]
+    [Authorize(Roles = "Seller, Admin")]
     public async Task<ActionResult<List<SellerCategoryCourseCountDto>>> GetCourseCountBySeller()
     {
         int sellerId = HttpContext.Items["UserId"] as int? ?? -1;
@@ -65,7 +65,7 @@ public class DashboardController : ControllerBase
 
     // Thống kê doanh thu 12 tháng gần nhất của seller
     [HttpGet("seller/revenue")]
-    [Authorize(Roles = "Seller")]
+    [Authorize(Roles = "Seller, Admin")]
     public async Task<ActionResult<List<MonthlyRevenueDto>>> GetSellerMonthlyRevenue(int sellerId)
     {
         var result = await _service.GetSellerMonthlyRevenueAsync(sellerId);
@@ -100,7 +100,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpGet("seller/total-revenue")]
-    [Authorize(Roles = "Seller")]
+    [Authorize(Roles = "Seller, Admin")]
     public async Task<IActionResult> GetSellerRevenue()
     {
         int sellerId = HttpContext.Items["UserId"] as int? ?? -1;
@@ -112,7 +112,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpGet("seller/stats")]
-    [Authorize(Roles = "Seller")]
+    [Authorize(Roles = "Seller, Admin")]
     public async Task<IActionResult> GetSellerStats()
     {
         int sellerId = HttpContext.Items["UserId"] as int? ?? -1;
@@ -132,7 +132,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpGet("course/{courseId}/monthly-revenue")]
-    [Authorize(Roles = "Seller")]
+    [Authorize(Roles = "Seller, Admin")]
     public async Task<ActionResult<List<MonthlyRevenueDto>>> GetCourseMonthlyRevenue(int courseId)
     {
         int sellerId = HttpContext.Items["UserId"] as int? ?? -1;
@@ -145,7 +145,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpGet("courses/{courseId}/review-stars")]
-    [Authorize(Roles = "Seller")]
+    [Authorize(Roles = "Seller, Admin")]
     public async Task<IActionResult> GetReviewStarCountsByCourse(int courseId)
     {
         int sellerId = HttpContext.Items["UserId"] as int? ?? -1;

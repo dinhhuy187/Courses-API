@@ -24,7 +24,7 @@ public class AppDbContext : DbContext
     public DbSet<TransactionDetail> TransactionDetails { get; set; }
     public DbSet<Conversation> Conversations { get; set; }
     public DbSet<Message> Messages { get; set; }
-
+    public DbSet<History> Histories { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -32,5 +32,7 @@ public class AppDbContext : DbContext
         // ✅ Composite key cho Favorite
         modelBuilder.Entity<Favorite>()
             .HasKey(f => new { f.UserId, f.CourseId });
+        modelBuilder.Entity<History>()
+            .HasKey(h => new { h.UserId, h.CourseId });
     }
 }
