@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using CloudinaryDotNet.Actions;
 using courses_buynsell_api.DTOs.Course;
 using courses_buynsell_api.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -34,16 +36,27 @@ namespace courses_buynsell_api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetById(int id)
         {
-            var course = await courseService.GetByIdAsync(id,User.IsInRole("Buyer"));
+            var course = await courseService.GetByIdAsync(id,!(User.IsInRole("Admin")||User.IsInRole("Seller")));
             if (course == null) return NotFound();
             return Ok(course);
+        }
+
+        [HttpGet("student/{courseId:int}")]
+        [Authorize(Roles = "Admin,Seller")]
+        public async Task<IActionResult> GetCourseStudents(int courseId)
+        {
+            var userId = int.Parse(User.FindFirst("id")!.Value);
+            var isAdmin = User.IsInRole("Admin");
+            var result = await courseService.GetCourseStudents(courseId, userId, isAdmin);
+            return Ok(result);
         }
 
         [HttpPost]
         [Authorize(Roles = "Admin, Seller")]
         public async Task<IActionResult> Create([FromForm] CreateCourseDto createCourseDto)
         {
-            var created = await courseService.CreateAsync(createCourseDto);
+            var userId = int.Parse(User.FindFirst("id")!.Value);
+            var created = await courseService.CreateAsync(createCourseDto, userId);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
@@ -51,7 +64,8 @@ namespace courses_buynsell_api.Controllers
         [Authorize(Roles = "Admin, Seller")]
         public async Task<IActionResult> Update(int id, [FromForm] UpdateCourseDto updateCourseDto)
         {
-            var updated = await courseService.UpdateAsync(id, updateCourseDto);
+            var userId = int.Parse(User.FindFirst("id")!.Value);
+            var updated = await courseService.UpdateAsync(id, updateCourseDto, userId);
             if (updated == null) return NotFound();
             return Ok(updated);
         }

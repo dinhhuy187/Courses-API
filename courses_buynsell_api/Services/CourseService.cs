@@ -92,11 +92,15 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
             .Include(c => c.CourseSkills)
             .Include(c => c.TargetLearners)
             .Include(c => c.Category)
+            .Include(c => c.Seller)
+            .Include(c => c.Reviews)
             .FirstOrDefaultAsync(c => c.Id == id);
 
         if (course == null) return null;
 
         if (isBuyer && (!course.IsApproved || course.IsRestricted)) return null;
+        
+        var commentCount = course.Reviews.Count;
         
         return new CourseDetailDto
         {
@@ -115,6 +119,9 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
             IsApproved = course.IsApproved,
             CreatedAt = course.CreatedAt,
             UpdatedAt = course.UpdatedAt,
+            Email = course.Seller!.Email,
+            Phone = course.Seller.PhoneNumber!,
+            CommentCount = commentCount,
             IsRestricted = course.IsRestricted,
             CourseContents = course.CourseContents.Select(c => new CourseContentDto{ Id = c.Id, Title = c.Title, Description = c.Description}).ToList(),
             CourseSkills = course.CourseSkills.Select(c => new SkillTargetDto{ Id = c.Id, Description = c.Name}).ToList(),
@@ -122,7 +129,28 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         };
     }
 
-    public async Task<CourseDetailDto> CreateAsync(CreateCourseDto dto)
+    public async Task<IEnumerable<CourseStudentDto>> GetCourseStudents(int courseId, int sellerId, bool isAdmin)
+    {
+        var entity = await context.Courses
+            .AsNoTracking()
+            .Include(c => c.Enrollments)
+            .ThenInclude(e => e.Buyer)
+            .FirstOrDefaultAsync(c => c.Id == courseId);
+        if (entity == null)
+            throw new NotFoundException("Course not found");
+        if (entity.SellerId != sellerId && !isAdmin)
+            throw new UnauthorizedException("You do not have permission to view this course students");
+        var result = entity.Enrollments.Select(e => new CourseStudentDto
+            {
+                StudentName = e.Buyer!.FullName,
+                PurchasedAmount = entity.Price,
+                EnrollAt = e.EnrollAt
+            })
+            .ToList();
+        return result;
+    }
+
+    public async Task<CourseDetailDto> CreateAsync(CreateCourseDto dto, int userId)
     {
         var entity = new Course
         {
@@ -133,7 +161,7 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
             TeacherName = dto.TeacherName,
             DurationHours = dto.DurationHours,
             CategoryId = dto.CategoryId,
-            SellerId = dto.SellerId,
+            SellerId = userId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             IsApproved = false,
@@ -175,7 +203,7 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         return await GetByIdAsync(entity.Id, false) ?? throw new InvalidOperationException("Created but cannot retrieve");
     }
 
-    public async Task<CourseDetailDto?> UpdateAsync(int id, UpdateCourseDto dto)
+    public async Task<CourseDetailDto?> UpdateAsync(int id, UpdateCourseDto dto, int sellerId)
     {
         var entity = await context.Courses
             .Include(c => c.CourseContents)
@@ -184,6 +212,9 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
             .FirstOrDefaultAsync(c => c.Id == id);
 
         if (entity == null) return null;
+
+        if (entity.SellerId != sellerId)
+            throw new UnauthorizedException("Update your course only!");
 
         entity.Title = dto.Title ?? entity.Title;
         entity.Description = dto.Description ?? entity.Description;
@@ -195,35 +226,35 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         entity.UpdatedAt = DateTime.UtcNow;
 
         // SYNC CourseContents
-        SyncChildren<CourseContent, CourseContentDto>(
-            existing: entity.CourseContents,
-            incoming: dto.CourseContents ?? new List<CourseContentDto>(),
-            addNew: d => new CourseContent { Title = d.Title, Description = d.Description },
-            updateExisting: (e, d) =>
-            {
-                e.Title = d.Description;
-                e.Description = d.Description;
-            },
-            getId: d => d.Id
-            );
-
-        // SYNC CourseSkills
-        SyncChildren<CourseSkill, SkillTargetDto>(
-            existing: entity.CourseSkills,
-            incoming: dto.CourseSkills ?? new List<SkillTargetDto>(),
-            addNew: d => new CourseSkill { Name = d.Description },
-            updateExisting: (e, d) => e.Name = d.Description,
-            getId: d => d.Id
-        );
-
-        // SYNC TargetLearners
-        SyncChildren<TargetLearner, SkillTargetDto>(
-            existing: entity.TargetLearners,
-            incoming: dto.TargetLearners ?? new List<SkillTargetDto>(),
-            addNew: d => new TargetLearner { Description = d.Description },
-            updateExisting: (e, d) => e.Description = d.Description,
-            getId: d => d.Id
-        );
+        // SyncChildren<CourseContent, CourseContentDto>(
+        //     existing: entity.CourseContents,
+        //     incoming: dto.CourseContents ?? new List<CourseContentDto>(),
+        //     addNew: d => new CourseContent { Title = d.Title, Description = d.Description },
+        //     updateExisting: (e, d) =>
+        //     {
+        //         e.Title = d.Description;
+        //         e.Description = d.Description;
+        //     },
+        //     getId: d => d.Id
+        //     );
+        //
+        // // SYNC CourseSkills
+        // SyncChildren<CourseSkill, SkillTargetDto>(
+        //     existing: entity.CourseSkills,
+        //     incoming: dto.CourseSkills ?? new List<SkillTargetDto>(),
+        //     addNew: d => new CourseSkill { Name = d.Description },
+        //     updateExisting: (e, d) => e.Name = d.Description,
+        //     getId: d => d.Id
+        // );
+        //
+        // // SYNC TargetLearners
+        // SyncChildren<TargetLearner, SkillTargetDto>(
+        //     existing: entity.TargetLearners,
+        //     incoming: dto.TargetLearners ?? new List<SkillTargetDto>(),
+        //     addNew: d => new TargetLearner { Description = d.Description },
+        //     updateExisting: (e, d) => e.Description = d.Description,
+        //     getId: d => d.Id
+        // );
 
         if (dto.Image != null)
         {

@@ -42,4 +42,5 @@ public class Course
     public ICollection<TargetLearner> TargetLearners { get; set; } = new List<TargetLearner>();
     public ICollection<TransactionDetail> TransactionDetails { get; set; } = new List<TransactionDetail>();
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
+    public ICollection<History> Histories { get; set; } = new List<History>();
 }
