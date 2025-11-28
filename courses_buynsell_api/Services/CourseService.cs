@@ -281,8 +281,10 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
     public async Task<bool> DeleteImageAsync(int courseId, int userId)
     {
         var entity = await context.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
-        if (entity == null || entity.SellerId != userId || string.IsNullOrEmpty(entity.ImageUrl))
+        if (entity == null || entity.SellerId != userId)
             return false;
+        if (string.IsNullOrEmpty(entity.ImageUrl))
+            return true;
         await imageService.DeleteImageAsync(entity.ImageUrl);
         entity.ImageUrl = null;
         await context.SaveChangesAsync();
