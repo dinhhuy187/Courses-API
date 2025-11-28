@@ -8,7 +8,7 @@ namespace courses_buynsell_api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-[Authorize]
+//[Authorize]
 public class NotificationController : ControllerBase
 {
     private readonly INotificationService _notificationService;

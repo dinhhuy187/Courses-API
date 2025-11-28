@@ -22,6 +22,9 @@ public class AppDbContext : DbContext
     public DbSet<TargetLearner> TargetLearners { get; set; }
     public DbSet<Transaction> Transactions { get; set; }
     public DbSet<TransactionDetail> TransactionDetails { get; set; }
+    public DbSet<Conversation> Conversations { get; set; }
+    public DbSet<Message> Messages { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

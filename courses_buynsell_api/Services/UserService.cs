@@ -64,6 +64,7 @@ public class UserService : IUserService
             .Where(u => u.Id == id)
             .Select(u => new UserDetailDto
             {
+                Id = u.Id,
                 FullName = u.FullName,
                 Email = u.Email,
                 PhoneNumber = u.PhoneNumber,
@@ -120,9 +121,9 @@ public class UserService : IUserService
                 await _imageService.DeleteImageAsync(user.AvatarUrl);
             }
 
-                // Upload avatar mới
-                var avatarUrl = await _imageService.UploadImageAsync(request.Avatar);
-                user.AvatarUrl = avatarUrl;
+            // Upload avatar mới
+            var avatarUrl = await _imageService.UploadImageAsync(request.Avatar);
+            user.AvatarUrl = avatarUrl;
         }
         // Nếu request.Avatar là null, xóa avatar hiện tại
         else if (!string.IsNullOrWhiteSpace(user.AvatarUrl))
