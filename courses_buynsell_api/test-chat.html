@@ -532,7 +532,7 @@
         // Load danh sách conversations
         async function loadConversations() {
             try {
-                const response = await fetch(`${apiBaseUrl}/api/chat/conversations`, {
+                const response = await fetch(`${apiBaseUrl}/chat/conversations`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
@@ -607,7 +607,7 @@
             console.log('📝 Creating conversation...', { courseId, sellerId, currentUserId });
 
             try {
-                const response = await fetch(`${apiBaseUrl}/api/chat/conversations`, {
+                const response = await fetch(`${apiBaseUrl}/chat/conversations`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -674,7 +674,7 @@
 
                 // Load messages
                 const response = await fetch(
-                    `${apiBaseUrl}/api/chat/conversations/${conversationId}/messages`,
+                    `${apiBaseUrl}/chat/conversations/${conversationId}/messages`,
                     {
                         headers: {
                             'Authorization': `Bearer ${token}`,

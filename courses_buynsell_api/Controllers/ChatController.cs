@@ -211,4 +211,20 @@ public class ChatController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [HttpGet("unread/count")]
+    public async Task<IActionResult> GetUnreadConversationCount()
+    {
+        int userId = GetUserId();
+        var count = await _chatService.CountUnreadConversationsAsync(userId);
+        return Ok(new { count });
+    }
+
+    [HttpGet("conversation/unread")]
+    public async Task<IActionResult> GetUnreadByCourse()
+    {
+        int sellerId = GetUserId();
+        var result = await _chatService.GetUnreadConversationsByCourseAsync(sellerId);
+        return Ok(result);
+    }
 }

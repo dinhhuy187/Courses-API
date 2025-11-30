@@ -31,4 +31,6 @@ public interface IChatService
 
     // Đếm số tin nhắn chưa đọc
     Task<int> GetUnreadCountAsync(int userId);
+    Task<int> CountUnreadConversationsAsync(int userId);
+    Task<List<UnreadConversationCountDto>> GetUnreadConversationsByCourseAsync(int sellerId);
 }
