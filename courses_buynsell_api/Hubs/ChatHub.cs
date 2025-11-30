@@ -11,6 +11,9 @@ public class ChatHub : Hub
 {
     private readonly IChatService _chatService;
     private readonly ILogger<ChatHub> _logger;
+    // ✅ THÊM DICTIONARY ĐỂ TRACK AI ĐANG Ở CONVERSATION NÀO
+    private static readonly Dictionary<string, HashSet<int>> _conversationMembers = new();
+    private static readonly object _lock = new();
 
     public ChatHub(IChatService chatService, ILogger<ChatHub> logger)
     {
@@ -18,12 +21,10 @@ public class ChatHub : Hub
         _logger = logger;
     }
 
-    // SỬA HÀM NÀY - Lấy userId từ JWT Claims
     private int GetUserId()
     {
         try
         {
-            // CÁCH 1: Lấy từ JWT Claims (chuẩn)
             var userIdClaim = Context.User?.FindFirst("id")?.Value
                 ?? Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
                 ?? Context.User?.FindFirst("sub")?.Value;
@@ -46,7 +47,7 @@ public class ChatHub : Hub
         }
     }
 
-    // Join vào một conversation room
+    // ✅ THÊM VÀO TRACKING KHI JOIN
     public async Task JoinConversation(int conversationId)
     {
         try
@@ -54,20 +55,27 @@ public class ChatHub : Hub
             var userId = GetUserId();
             _logger.LogInformation($"User {userId} joining conversation {conversationId}");
 
-            // Kiểm tra quyền truy cập
             var hasAccess = await _chatService.HasAccessToConversationAsync(userId, conversationId);
             if (!hasAccess)
             {
                 throw new HubException("You don't have access to this conversation");
             }
 
-            // Join room
             await Groups.AddToGroupAsync(Context.ConnectionId, $"conversation_{conversationId}");
 
-            // Đánh dấu tin nhắn đã đọc
+            // ✅ TRACK USER VÀO CONVERSATION
+            lock (_lock)
+            {
+                var roomKey = $"conversation_{conversationId}";
+                if (!_conversationMembers.ContainsKey(roomKey))
+                {
+                    _conversationMembers[roomKey] = new HashSet<int>();
+                }
+                _conversationMembers[roomKey].Add(userId);
+            }
+
             await _chatService.MarkMessagesAsReadAsync(userId, conversationId);
 
-            // Thông báo cho người khác trong room
             await Clients.Group($"conversation_{conversationId}")
                 .SendAsync("UserJoined", userId, Context.ConnectionId);
 
@@ -80,13 +88,27 @@ public class ChatHub : Hub
         }
     }
 
-    // Leave khỏi conversation room
+    // ✅ XÓA KHỎI TRACKING KHI LEAVE
     public async Task LeaveConversation(int conversationId)
     {
         try
         {
             var userId = GetUserId();
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"conversation_{conversationId}");
+
+            // ✅ XÓA USER KHỎI TRACKING
+            lock (_lock)
+            {
+                var roomKey = $"conversation_{conversationId}";
+                if (_conversationMembers.ContainsKey(roomKey))
+                {
+                    _conversationMembers[roomKey].Remove(userId);
+                    if (_conversationMembers[roomKey].Count == 0)
+                    {
+                        _conversationMembers.Remove(roomKey);
+                    }
+                }
+            }
 
             await Clients.Group($"conversation_{conversationId}")
                 .SendAsync("UserLeft", userId, Context.ConnectionId);
@@ -99,7 +121,7 @@ public class ChatHub : Hub
         }
     }
 
-    // Gửi tin nhắn
+    // ✅ SỬA HÀM SendMessage
     public async Task SendMessage(SendMessageDto dto)
     {
         try
@@ -107,15 +129,16 @@ public class ChatHub : Hub
             var userId = GetUserId();
             _logger.LogInformation($"User {userId} sending message to conversation {dto.ConversationId}");
 
-            // Gửi tin nhắn qua service
             var message = await _chatService.SendMessageAsync(userId, dto);
 
-            // Broadcast tin nhắn tới tất cả members trong conversation room
+            // ✅ GỬI CHO TẤT CẢ NGƯỜI TRONG ROOM (bao gồm cả sender)
             await Clients.Group($"conversation_{dto.ConversationId}")
                 .SendAsync("ReceiveMessage", message);
 
-            // Gửi notification tới người nhận (nếu họ không ở trong room)
-            await NotifyNewMessage(dto.ConversationId, userId, message);
+            // ✅ GỬI NOTIFICATION CHO NGƯỜI KHÔNG Ở TRONG ROOM
+            await NotifyNewMessageToOfflineUsers(dto.ConversationId, userId, message);
+
+            _logger.LogInformation($"Message sent successfully to conversation {dto.ConversationId}");
         }
         catch (Exception ex)
         {
@@ -124,21 +147,18 @@ public class ChatHub : Hub
         }
     }
 
-    // Typing indicator
     public async Task UserTyping(int conversationId, bool isTyping)
     {
         try
         {
             var userId = GetUserId();
 
-            // Kiểm tra quyền truy cập
             var hasAccess = await _chatService.HasAccessToConversationAsync(userId, conversationId);
             if (!hasAccess)
             {
                 throw new HubException("You don't have access to this conversation");
             }
 
-            // Gửi typing status tới người khác trong room (trừ người gửi)
             await Clients.OthersInGroup($"conversation_{conversationId}")
                 .SendAsync("UserTypingStatus", userId, isTyping);
         }
@@ -149,7 +169,6 @@ public class ChatHub : Hub
         }
     }
 
-    // Đánh dấu đã đọc
     public async Task MarkAsRead(int conversationId)
     {
         try
@@ -157,7 +176,6 @@ public class ChatHub : Hub
             var userId = GetUserId();
             await _chatService.MarkMessagesAsReadAsync(userId, conversationId);
 
-            // Thông báo cho người khác biết tin nhắn đã được đọc
             await Clients.OthersInGroup($"conversation_{conversationId}")
                 .SendAsync("MessagesMarkedAsRead", userId, conversationId);
         }
@@ -168,7 +186,6 @@ public class ChatHub : Hub
         }
     }
 
-    // Override OnConnectedAsync
     public override async Task OnConnectedAsync()
     {
         try
@@ -176,7 +193,6 @@ public class ChatHub : Hub
             var userId = GetUserId();
             _logger.LogInformation($"User {userId} connected to ChatHub, ConnectionId: {Context.ConnectionId}");
 
-            // Join vào personal room để nhận notifications
             await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{userId}");
 
             await base.OnConnectedAsync();
@@ -188,12 +204,25 @@ public class ChatHub : Hub
         }
     }
 
-    // Override OnDisconnectedAsync
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         try
         {
             var userId = GetUserId();
+
+            // ✅ XÓA USER KHỎI TẤT CẢ CONVERSATIONS KHI DISCONNECT
+            lock (_lock)
+            {
+                foreach (var room in _conversationMembers.Keys.ToList())
+                {
+                    _conversationMembers[room].Remove(userId);
+                    if (_conversationMembers[room].Count == 0)
+                    {
+                        _conversationMembers.Remove(room);
+                    }
+                }
+            }
+
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"user_{userId}");
             _logger.LogInformation($"User {userId} disconnected from ChatHub");
         }
@@ -205,26 +234,42 @@ public class ChatHub : Hub
         await base.OnDisconnectedAsync(exception);
     }
 
-    // Helper method để gửi notification
-    private async Task NotifyNewMessage(int conversationId, int senderId, MessageDto message)
+    // ✅ SỬA HÀM NOTIFICATION - CHỈ GỬI CHO NGƯỜI KHÔNG Ở TRONG ROOM
+    private async Task NotifyNewMessageToOfflineUsers(int conversationId, int senderId, MessageDto message)
     {
         try
         {
             var conversation = await _chatService.GetConversationDetailAsync(senderId, conversationId);
             if (conversation == null) return;
 
-            // Xác định người nhận (người không phải là sender)
             var receiverId = conversation.BuyerId == senderId
                 ? conversation.SellerId
                 : conversation.BuyerId;
 
-            // Gửi notification tới personal room của người nhận
-            await Clients.Group($"user_{receiverId}")
-                .SendAsync("NewMessageNotification", new
-                {
-                    Message = message,
-                    Conversation = conversation
-                });
+            // ✅ KIỂM TRA XEM NGƯỜI NHẬN CÓ ĐANG Ở TRONG ROOM KHÔNG
+            bool isReceiverInRoom = false;
+            lock (_lock)
+            {
+                var roomKey = $"conversation_{conversationId}";
+                isReceiverInRoom = _conversationMembers.ContainsKey(roomKey)
+                    && _conversationMembers[roomKey].Contains(receiverId);
+            }
+
+            // ✅ CHỈ GỬI NOTIFICATION NẾU NGƯỜI NHẬN KHÔNG Ở TRONG ROOM
+            if (!isReceiverInRoom)
+            {
+                _logger.LogInformation($"Sending notification to user {receiverId} (not in room)");
+                await Clients.Group($"user_{receiverId}")
+                    .SendAsync("NewMessageNotification", new
+                    {
+                        Message = message,
+                        Conversation = conversation
+                    });
+            }
+            else
+            {
+                _logger.LogInformation($"User {receiverId} is in room, skipping notification");
+            }
         }
         catch (Exception ex)
         {

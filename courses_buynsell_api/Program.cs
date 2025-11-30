@@ -85,6 +85,7 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
                 "http://localhost:3000",
+                "http://localhost:5174",
                 "http://localhost:5173",
                 "http://127.0.0.1:5500",
                 "http://localhost:5500",
@@ -200,14 +201,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 // Sử dụng CORS
-app.UseCors("AllowAll");              // 1. CORS trước tiên
-
-app.UseAuthentication();              // 2. Authentication (JWT)
-app.UseAuthorization();               // 3. Authorization
-// thêm middleware JWT
+// ✅ Thứ tự middleware ĐÚNG
+app.UseCors("AllowAll");
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseMiddleware<JwtMiddleware>();
 app.UseErrorHandling();
-// Map SignalR Hub
+
 app.MapControllers();
 app.MapHub<NotificationHub>("/notificationHub");
 app.MapHub<ChatHub>("/chathub");

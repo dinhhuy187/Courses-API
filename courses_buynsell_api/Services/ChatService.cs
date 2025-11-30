@@ -276,4 +276,38 @@ public class ChatService : IChatService
             IsSentByCurrentUser = message.SenderId == currentUserId
         };
     }
+
+    public async Task<int> CountUnreadConversationsAsync(int userId)
+    {
+        return await _context.Messages
+            .Where(m =>
+                m.SenderId != userId &&   // người gửi là đối phương
+                !m.IsRead                 // chưa đọc
+            )
+            .Select(m => m.ConversationId)
+            .Distinct()
+            .CountAsync();
+    }
+
+    public async Task<List<UnreadConversationCountDto>> GetUnreadConversationsByCourseAsync(int sellerId)
+    {
+        var result = await _context.Conversations
+            .Where(c => c.SellerId == sellerId)
+            .Select(c => new
+            {
+                c.CourseId,
+                Unread = c.Messages!
+                    .Any(m => !m.IsRead && m.SenderId != sellerId)
+            })
+            .Where(x => x.Unread)
+            .GroupBy(x => x.CourseId)
+            .Select(g => new UnreadConversationCountDto
+            {
+                CourseId = g.Key,
+                UnreadCount = g.Count()
+            })
+            .ToListAsync();
+
+        return result;
+    }
 }
