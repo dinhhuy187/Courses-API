@@ -33,4 +33,9 @@ public interface IChatService
     Task<int> GetUnreadCountAsync(int userId);
     Task<int> CountUnreadConversationsAsync(int userId);
     Task<List<UnreadConversationCountDto>> GetUnreadConversationsByCourseAsync(int sellerId);
+    // Thêm method này vào interface IChatService hiện tại
+    Task<SendMessageWithConversationResponseDto> SendMessageWithNewConversationAsync(
+        int buyerId,
+        SendMessageWithNewConversationDto dto
+    );
 }

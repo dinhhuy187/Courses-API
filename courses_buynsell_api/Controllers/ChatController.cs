@@ -227,4 +227,34 @@ public class ChatController : ControllerBase
         var result = await _chatService.GetUnreadConversationsByCourseAsync(sellerId);
         return Ok(result);
     }
+
+    // Thêm endpoint này vào ChatController
+
+    [HttpPost("messages/new-conversation")]
+    [Authorize]
+    public async Task<ActionResult<SendMessageWithConversationResponseDto>> SendMessageWithNewConversation(
+        [FromBody] SendMessageWithNewConversationDto dto)
+    {
+        try
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? throw new UnauthorizedAccessException("User ID not found"));
+
+            var result = await _chatService.SendMessageWithNewConversationAsync(userId, dto);
+
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Đã xảy ra lỗi khi gửi tin nhắn" });
+        }
+    }
 }
