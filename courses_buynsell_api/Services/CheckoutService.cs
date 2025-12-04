@@ -87,57 +87,82 @@ public class CheckoutService : ICheckoutService
 
     public async Task HandleMomoCallbackAsync(Dictionary<string, string> formData)
     {
-        _logger.LogInformation($"🔔 Received MoMo callback: {JsonConvert.SerializeObject(formData)}");
-
-        if (!formData.ContainsKey("signature"))
-        {
-            _logger.LogError("❌ No signature in callback data");
-            return;
-        }
-
-        string signature = formData["signature"];
-        var formDataCopy = new Dictionary<string, string>(formData);
-        formDataCopy.Remove("signature");
-
-        var rawHash = string.Join("&", formDataCopy.OrderBy(x => x.Key)
-            .Select(x => $"{x.Key}={x.Value}"));
-
-        _logger.LogInformation($"🔐 Raw hash for verification: {rawHash}");
-
-        string mySignature = HmacSHA256(rawHash, _momo.SecretKey);
-
-        _logger.LogInformation($"✅ My signature: {mySignature}");
-        _logger.LogInformation($"📩 MoMo signature: {signature}");
-        _logger.LogInformation($"🎯 Result code: {formData.GetValueOrDefault("resultCode", "N/A")}");
-
-        // ✅ Chỉ xử lý khi thanh toán THÀNH CÔNG
-        if (mySignature != signature)
-        {
-            _logger.LogError("❌ Signature verification FAILED!");
-            return;
-        }
-
-        if (!formData.ContainsKey("resultCode") || formData["resultCode"] != "0")
-        {
-            _logger.LogWarning($"⚠️ Payment failed or pending. Result code: {formData.GetValueOrDefault("resultCode", "N/A")}");
-            return;
-        }
-
-        string orderId = formData["orderId"];
-        _logger.LogInformation($"✅ Payment successful for orderId: {orderId}");
-
-        // ✅ Lấy thông tin payment từ cache
-        if (!_cache.TryGetValue($"payment_{orderId}", out PaymentCacheInfo? paymentInfo) || paymentInfo == null)
-        {
-            _logger.LogError($"❌ Payment info not found in cache for orderId: {orderId}");
-            return;
-        }
-
-        _logger.LogInformation($"💾 Retrieved payment info from cache: BuyerId={paymentInfo.BuyerId}, CourseIds={string.Join(",", paymentInfo.CourseIds)}");
-
         try
         {
-            // ✅ BẮT ĐẦU LƯU VÀO DATABASE SAU KHI THANH TOÁN THÀNH CÔNG
+            _logger.LogInformation($"🔔 Received MoMo callback: {JsonConvert.SerializeObject(formData)}");
+
+            // 1. Kiểm tra có signature từ MoMo gửi về không
+            if (!formData.TryGetValue("signature", out string? receivedSignature) || string.IsNullOrEmpty(receivedSignature))
+            {
+                _logger.LogError("❌ No signature in callback data");
+                return;
+            }
+
+            // 2. Lấy các tham số cần thiết để hash
+            // Lưu ý: Dùng TryGetValue hoặc lấy trực tiếp nhưng cần đảm bảo dữ liệu không null
+            string partnerCode = formData.GetValueOrDefault("partnerCode", "");
+            string orderId = formData.GetValueOrDefault("orderId", "");
+            string requestId = formData.GetValueOrDefault("requestId", "");
+            string amount = formData.GetValueOrDefault("amount", "");
+            string orderInfo = formData.GetValueOrDefault("orderInfo", "");
+            string orderType = formData.GetValueOrDefault("orderType", "");
+            string transId = formData.GetValueOrDefault("transId", "");
+            string resultCode = formData.GetValueOrDefault("resultCode", "");
+            string message = formData.GetValueOrDefault("message", "");
+            string payType = formData.GetValueOrDefault("payType", "");
+            string responseTime = formData.GetValueOrDefault("responseTime", "");
+            string extraData = formData.GetValueOrDefault("extraData", "");
+
+            // 3. TẠO CHUỖI RAW HASH ĐÚNG CHUẨN MOMO
+            // Quy tắc: Sắp xếp a-z. QUAN TRỌNG: Phải đưa _momo.AccessKey vào đầu tiên
+            string rawHash = $"accessKey={_momo.AccessKey}" +
+                             $"&amount={amount}" +
+                             $"&extraData={extraData}" +
+                             $"&message={message}" +
+                             $"&orderId={orderId}" +
+                             $"&orderInfo={orderInfo}" +
+                             $"&orderType={orderType}" +
+                             $"&partnerCode={partnerCode}" +
+                             $"&payType={payType}" +
+                             $"&requestId={requestId}" +
+                             $"&responseTime={responseTime}" +
+                             $"&resultCode={resultCode}" +
+                             $"&transId={transId}";
+
+            _logger.LogInformation($"🔐 Raw hash for verification: {rawHash}");
+
+            // 4. Tạo signature của mình để so sánh
+            string mySignature = HmacSHA256(rawHash, _momo.SecretKey);
+
+            _logger.LogInformation($"✅ My signature: {mySignature}");
+            _logger.LogInformation($"📩 MoMo signature: {receivedSignature}");
+
+            // 5. So sánh signature
+            if (mySignature != receivedSignature)
+            {
+                _logger.LogError("❌ Signature verification FAILED! Mismatch detected.");
+                return;
+            }
+
+            // 6. Kiểm tra resultCode (0 = Thành công)
+            if (resultCode != "0")
+            {
+                _logger.LogWarning($"⚠️ Payment failed or pending. Result code: {resultCode}, Message: {message}");
+                return;
+            }
+
+            _logger.LogInformation($"✅ Signature verified & Payment success for orderId: {orderId}");
+
+            // 7. Lấy thông tin từ Cache
+            if (!_cache.TryGetValue($"payment_{orderId}", out PaymentCacheInfo? paymentInfo) || paymentInfo == null)
+            {
+                _logger.LogError($"❌ Payment info not found in cache for orderId: {orderId}. Transaction might be lost.");
+                return;
+            }
+
+            _logger.LogInformation($"💾 Retrieved info from cache: BuyerId={paymentInfo.BuyerId}, CourseIds={string.Join(",", paymentInfo.CourseIds)}");
+
+            // 8. Lưu Transaction vào DB
             var transaction = new Transaction
             {
                 TransactionCode = orderId,
@@ -149,11 +174,11 @@ public class CheckoutService : ICheckoutService
             };
 
             _context.Transactions.Add(transaction);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(); // Lưu để lấy transaction ID
 
             _logger.LogInformation($"💰 Created transaction ID: {transaction.Id}");
 
-            // ✅ Lưu TransactionDetails và gửi thông báo
+            // 9. Lưu Transaction Detail và Gửi thông báo
             foreach (var courseId in paymentInfo.CourseIds)
             {
                 var course = await _context.Courses
@@ -170,34 +195,25 @@ public class CheckoutService : ICheckoutService
                         Price = course.Price
                     });
 
-                    _logger.LogInformation($"📦 Added transaction detail for course: {course.Title} (ID: {courseId})");
-
-                    // ✅ Gửi thông báo cho seller
+                    // Gửi thông báo cho Seller
                     await _notificationService.SendPaymentSuccessNotificationAsync(
                         sellerId: course.SellerId,
                         amount: course.Price,
                         courseName: course.Title
                     );
-
-                    _logger.LogInformation($"📧 Sent notification to seller ID: {course.SellerId}");
-                }
-                else
-                {
-                    _logger.LogWarning($"⚠️ Course not found: {courseId}");
                 }
             }
 
             await _context.SaveChangesAsync();
             _logger.LogInformation($"✅ All transaction details saved successfully");
 
-            // ✅ Xóa cache sau khi xử lý xong
+            // 10. Xóa cache
             _cache.Remove($"payment_{orderId}");
-            _logger.LogInformation($"🗑️ Removed payment info from cache");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"❌ Error processing payment callback for orderId: {orderId}");
-            throw;
+            _logger.LogError(ex, $"❌ Exception in HandleMomoCallbackAsync");
+            throw; // Ném lỗi để phía Controller biết đường trả về HTTP 500 nếu cần
         }
     }
 

@@ -310,4 +310,112 @@ public class ChatService : IChatService
 
         return result;
     }
+
+    // Thêm method này vào class ChatService
+    public async Task<SendMessageWithConversationResponseDto> SendMessageWithNewConversationAsync(
+        int buyerId,
+        SendMessageWithNewConversationDto dto)
+    {
+        // 1. Validate Course tồn tại và thuộc về Seller
+        var course = await _context.Courses
+            .FirstOrDefaultAsync(c => c.Id == dto.CourseId && c.SellerId == dto.SellerId);
+
+        if (course == null)
+        {
+            throw new KeyNotFoundException($"Không tìm thấy khóa học với ID {dto.CourseId} thuộc seller {dto.SellerId}");
+        }
+
+        // 2. Validate Buyer tồn tại
+        var buyer = await _context.Users.FindAsync(buyerId);
+        if (buyer == null)
+        {
+            throw new KeyNotFoundException($"Không tìm thấy người dùng với ID {buyerId}");
+        }
+
+        // 3. Validate Seller tồn tại
+        var seller = await _context.Users.FindAsync(dto.SellerId);
+        if (seller == null)
+        {
+            throw new KeyNotFoundException($"Không tìm thấy seller với ID {dto.SellerId}");
+        }
+
+        // 4. Kiểm tra xem đã có conversation chưa
+        var existingConversation = await _context.Conversations
+            .FirstOrDefaultAsync(c =>
+                c.CourseId == dto.CourseId &&
+                c.BuyerId == buyerId &&
+                c.SellerId == dto.SellerId);
+
+        Conversation conversation;
+        bool isNewConversation = false;
+
+        if (existingConversation != null)
+        {
+            // Sử dụng conversation có sẵn
+            conversation = existingConversation;
+        }
+        else
+        {
+            // Tạo conversation mới
+            conversation = new Conversation
+            {
+                CourseId = dto.CourseId,
+                BuyerId = buyerId,
+                SellerId = dto.SellerId,
+                CreatedAt = DateTime.UtcNow,
+                LastMessageAt = DateTime.UtcNow
+            };
+
+            _context.Conversations.Add(conversation);
+            await _context.SaveChangesAsync();
+            isNewConversation = true;
+        }
+
+        // 5. Tạo message mới
+        var message = new Message
+        {
+            ConversationId = conversation.Id,
+            SenderId = buyerId,
+            Content = dto.Content,
+            CreatedAt = DateTime.UtcNow,
+            IsRead = false
+        };
+
+        _context.Messages.Add(message);
+
+        // 6. Cập nhật LastMessageAt của conversation
+        conversation.LastMessageAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        // 7. Load lại để lấy thông tin đầy đủ
+        var messageWithDetails = await _context.Messages
+            .Include(m => m.Sender)
+            .Include(m => m.Conversation)
+                .ThenInclude(c => c.Course)
+            .FirstOrDefaultAsync(m => m.Id == message.Id);
+
+        if (messageWithDetails == null)
+        {
+            throw new Exception("Lỗi khi tải thông tin tin nhắn");
+        }
+
+        // 8. Map sang DTO
+        var messageDto = new MessageDto
+        {
+            Id = messageWithDetails.Id,
+            ConversationId = messageWithDetails.ConversationId,
+            SenderId = messageWithDetails.SenderId,
+            SenderName = messageWithDetails.Sender?.FullName ?? "Unknown",
+            Content = messageWithDetails.Content,
+            CreatedAt = messageWithDetails.CreatedAt,
+            IsRead = messageWithDetails.IsRead
+        };
+
+        return new SendMessageWithConversationResponseDto
+        {
+            ConversationId = conversation.Id,
+            Message = messageDto
+        };
+    }
 }
