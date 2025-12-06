@@ -18,7 +18,7 @@ public interface IChatService
     Task<MessageDto> SendMessageAsync(int senderId, SendMessageDto dto);
 
     // Lấy messages của một conversation (có phân trang)
-    Task<List<MessageDto>> GetConversationMessagesAsync(int userId, GetMessagesDto dto);
+    Task<PagedResult<MessageDto>> GetConversationMessagesAsync(int userId, GetMessagesDto dto);
 
     // Đánh dấu messages đã đọc
     Task MarkMessagesAsReadAsync(int userId, int conversationId);

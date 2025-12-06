@@ -130,8 +130,6 @@ namespace courses_buynsell_api.Controllers
 
         // PUT: /User/
         [HttpPut]
-        // PUT: /User/
-        [HttpPut]
         public async Task<IActionResult> UpdateUser([FromForm] UpdateUserRequest request)
         {
             try

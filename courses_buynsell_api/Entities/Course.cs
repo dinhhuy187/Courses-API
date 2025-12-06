@@ -27,7 +27,7 @@ public class Course
     public int TotalPurchased { get; set; }
     public decimal AverageRating { get; set; }
     public bool IsApproved { get; set; }
-    
+
     public bool IsRestricted { get; set; }
     [Required]
     public DateTime CreatedAt { get; set; }

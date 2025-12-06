@@ -191,9 +191,10 @@ public class DashboardService : IDashboardService
 
         var totalStudents = courses.Sum(c => c.TotalPurchased);
 
-        var avgRating = courses.Any()
-            ? courses.Average(c => c.AverageRating)
+        var avgRating = courses.Any(c => c.AverageRating > 0)
+            ? courses.Where(c => c.AverageRating > 0).Average(c => c.AverageRating)
             : 0;
+
 
         return new SellerStatsDto
         {

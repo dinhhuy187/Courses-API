@@ -71,19 +71,51 @@ public class ChatService : IChatService
 
     public async Task<PagedResult<ConversationDto>> GetUserConversationsAsync(int userId, int page, int pageSize)
     {
+        // 1. Chỉ lọc hội thoại, KHÔNG dùng Include ở đây nữa (vì ta sẽ Select cụ thể bên dưới)
         var query = _context.Conversations
-            .Include(c => c.Course)
-            .Include(c => c.Buyer)
-            .Include(c => c.Seller)
-            .Include(c => c.Messages.OrderByDescending(m => m.CreatedAt).Take(1))
             .Where(c => c.BuyerId == userId || c.SellerId == userId);
 
         var total = await query.CountAsync();
 
+        // 2. Dùng Select để map trực tiếp ra DTO.
+        // EF Core sẽ dịch đoạn này thành câu SQL tối ưu: lấy thông tin + COUNT unread + TOP 1 message
         var conversations = await query
             .OrderByDescending(c => c.LastMessageAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .Select(c => new ConversationDto
+            {
+                Id = c.Id,
+                CourseId = c.CourseId,
+                CourseTitle = c.Course.Title, // Map các trường course
+
+                // Map thông tin người chat cùng (Logic tương tự MapToConversationDto của bạn)
+                BuyerId = c.BuyerId,
+                BuyerName = c.Buyer.FullName, // Hoặc c.Buyer.UserName
+                BuyerAvatar = c.Buyer.AvatarUrl,
+
+                SellerId = c.SellerId,
+                SellerName = c.Seller.FullName,
+                SellerAvatar = c.Seller.AvatarUrl,
+
+                LastMessageAt = c.LastMessageAt,
+
+                // ✅ QUAN TRỌNG NHẤT: Đếm số tin nhắn chưa đọc ngay trong SQL
+                UnreadCount = c.Messages.Count(m => !m.IsRead && m.SenderId != userId),
+
+                // ✅ Lấy tin nhắn cuối cùng (Map sang MessageDto)
+                LastMessage = c.Messages
+                    .OrderByDescending(m => m.CreatedAt)
+                    .Select(m => new MessageDto
+                    {
+                        Id = m.Id,
+                        Content = m.Content,
+                        CreatedAt = m.CreatedAt,
+                        SenderId = m.SenderId,
+                        IsRead = m.IsRead
+                    })
+                    .FirstOrDefault()
+            })
             .ToListAsync();
 
         return new PagedResult<ConversationDto>
@@ -91,25 +123,24 @@ public class ChatService : IChatService
             Page = page,
             PageSize = pageSize,
             TotalCount = total,
-            Items = conversations.Select(c => MapToConversationDto(c, userId)).ToList()
+            Items = conversations
         };
     }
 
     public async Task<PagedResult<ConversationDto>> GetCourseConversationsAsync(
     int sellerId, int courseId, int page, int pageSize)
     {
-        // Kiểm tra quyền
         var courseExists = await _context.Courses
             .AnyAsync(c => c.Id == courseId && c.SellerId == sellerId);
 
         if (!courseExists)
             throw new Exception("Course not found or you don't have permission");
 
+        // 1️⃣ Chỉ load buyer/seller + course (không load messages)
         var query = _context.Conversations
             .Include(c => c.Course)
             .Include(c => c.Buyer)
             .Include(c => c.Seller)
-            .Include(c => c.Messages.OrderByDescending(m => m.CreatedAt).Take(1))
             .Where(c => c.CourseId == courseId && c.SellerId == sellerId);
 
         var total = await query.CountAsync();
@@ -120,14 +151,66 @@ public class ChatService : IChatService
             .Take(pageSize)
             .ToListAsync();
 
+        var conversationIds = conversations.Select(c => c.Id).ToList();
+
+        // 2️⃣ Lấy last message cho toàn bộ conversation (1 query)
+        var lastMessages = await _context.Messages
+            .Where(m => conversationIds.Contains(m.ConversationId))
+            .GroupBy(m => m.ConversationId)
+            .Select(g => new
+            {
+                ConversationId = g.Key,
+                LastMessage = g
+                    .OrderByDescending(m => m.CreatedAt)
+                    .FirstOrDefault()
+            })
+            .ToDictionaryAsync(x => x.ConversationId, x => x.LastMessage);
+
+        // 3️⃣ Lấy unread count (1 query)
+        var unreadCounts = await _context.Messages
+            .Where(m => conversationIds.Contains(m.ConversationId)
+                        && !m.IsRead
+                        && m.SenderId != sellerId)
+            .GroupBy(m => m.ConversationId)
+            .Select(g => new
+            {
+                ConversationId = g.Key,
+                Count = g.Count()
+            })
+            .ToDictionaryAsync(x => x.ConversationId, x => x.Count);
+
+        // 4️⃣ Map DTO – bạn vẫn dùng map function hiện tại
+        var items = conversations.Select(c =>
+        {
+            var dto = MapToConversationDto(c, sellerId);
+
+            dto.LastMessage = lastMessages.ContainsKey(c.Id)
+                ? new MessageDto
+                {
+                    Id = lastMessages[c.Id].Id,
+                    Content = lastMessages[c.Id].Content,
+                    CreatedAt = lastMessages[c.Id].CreatedAt,
+                    SenderId = lastMessages[c.Id].SenderId,
+                    IsRead = lastMessages[c.Id].IsRead
+                }
+                : null;
+
+            dto.UnreadCount = unreadCounts.ContainsKey(c.Id)
+                ? unreadCounts[c.Id]
+                : 0;
+
+            return dto;
+        }).ToList();
+
         return new PagedResult<ConversationDto>
         {
             Page = page,
             PageSize = pageSize,
             TotalCount = total,
-            Items = conversations.Select(c => MapToConversationDto(c, sellerId)).ToList()
+            Items = items
         };
     }
+
 
 
     public async Task<MessageDto> SendMessageAsync(int senderId, SendMessageDto dto)
@@ -163,12 +246,18 @@ public class ChatService : IChatService
         return MapToMessageDto(message, senderId);
     }
 
-    public async Task<List<MessageDto>> GetConversationMessagesAsync(int userId, GetMessagesDto dto)
+    public async Task<PagedResult<MessageDto>> GetConversationMessagesAsync(int userId, GetMessagesDto dto)
     {
         // Kiểm tra quyền truy cập
         if (!await HasAccessToConversationAsync(userId, dto.ConversationId))
             throw new Exception("You don't have access to this conversation");
 
+        // Tổng số message trong conversation
+        var totalCount = await _context.Messages
+            .Where(m => m.ConversationId == dto.ConversationId)
+            .LongCountAsync();
+
+        // Lấy dữ liệu phân trang
         var messages = await _context.Messages
             .Include(m => m.Sender)
             .Where(m => m.ConversationId == dto.ConversationId)
@@ -177,11 +266,24 @@ public class ChatService : IChatService
             .Take(dto.PageSize)
             .ToListAsync();
 
-        // Reverse để hiển thị tin nhắn cũ nhất trước
+        // Đảo lại để hiển thị tin cũ trước
         messages.Reverse();
 
-        return messages.Select(m => MapToMessageDto(m, userId)).ToList();
+        // Map DTO
+        var items = messages
+            .Select(m => MapToMessageDto(m, userId))
+            .ToList();
+
+        // Trả về PagedResult
+        return new PagedResult<MessageDto>
+        {
+            Page = dto.Page,
+            PageSize = dto.PageSize,
+            TotalCount = totalCount,
+            Items = items
+        };
     }
+
 
     public async Task MarkMessagesAsReadAsync(int userId, int conversationId)
     {

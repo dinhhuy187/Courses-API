@@ -125,8 +125,8 @@ public class UserService : IUserService
             var avatarUrl = await _imageService.UploadImageAsync(request.Avatar);
             user.AvatarUrl = avatarUrl;
         }
-        // Nếu request.Avatar là null, xóa avatar hiện tại
-        else if (!string.IsNullOrWhiteSpace(user.AvatarUrl))
+        // Nếu request.deleteImage = true thì xóa ảnh
+        else if (request.deleteImage)
         {
             await _imageService.DeleteImageAsync(user.AvatarUrl);
             user.AvatarUrl = null;
