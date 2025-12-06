@@ -237,8 +237,7 @@ public class ChatController : ControllerBase
     {
         try
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                ?? throw new UnauthorizedAccessException("User ID not found"));
+            var userId = GetUserId();
 
             var result = await _chatService.SendMessageWithNewConversationAsync(userId, dto);
 
@@ -256,5 +255,16 @@ public class ChatController : ControllerBase
         {
             return StatusCode(500, new { message = "Đã xảy ra lỗi khi gửi tin nhắn" });
         }
+    }
+
+    [HttpGet("search-buyers")]
+    public async Task<IActionResult> SearchBuyers([FromQuery] string name)
+    {
+        // Giả sử bạn có cơ chế lấy UserId từ token, ví dụ: User.FindFirst("id")?.Value
+        // Ở đây tôi ví dụ biến currentUserId
+        var currentUserId = GetUserId();
+
+        var result = await _chatService.SearchUsersAsync(currentUserId, name);
+        return Ok(result);
     }
 }

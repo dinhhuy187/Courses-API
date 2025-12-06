@@ -520,4 +520,37 @@ public class ChatService : IChatService
             Message = messageDto
         };
     }
+
+    public async Task<List<ChatUserSearchResultDto>> SearchUsersAsync(int currentUserId, string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return new List<ChatUserSearchResultDto>();
+
+        // 1. Chuyển query về chữ thường và xóa khoảng trắng thừa
+        query = query.Trim().ToLower();
+
+        var results = await _context.Conversations
+            .AsNoTracking()
+            .Include(c => c.Buyer)
+            .Include(c => c.Course)
+            .Where(c => c.SellerId == currentUserId &&
+                        // 2. Chuyển tên Buyer về chữ thường, sau đó dùng Contains
+                        // Contains trong EF Core sẽ dịch ra SQL là LIKE '%query%'
+                        c.Buyer.FullName.ToLower().Contains(query))
+            .OrderByDescending(c => c.LastMessageAt)
+            .Take(20)
+            .Select(c => new ChatUserSearchResultDto
+            {
+                ConversationId = c.Id,
+                BuyerId = c.BuyerId,
+                BuyerName = c.Buyer.FullName, // Lưu ý: Trả về tên gốc (có hoa thường) để hiển thị cho đẹp
+                BuyerAvatar = c.Buyer.AvatarUrl,
+                CourseTitle = c.Course.Title,
+                LastMessageAt = c.LastMessageAt
+            })
+            .ToListAsync();
+
+        return results;
+    }
+
 }
