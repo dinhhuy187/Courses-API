@@ -4,21 +4,22 @@ using courses_buynsell_api.DTOs.Course;
 using courses_buynsell_api.Entities;
 using courses_buynsell_api.Exceptions;
 using courses_buynsell_api.Interfaces;
+using courses_buynsell_api.DTOs.Notification;
 using Microsoft.EntityFrameworkCore;
 
 namespace courses_buynsell_api.Services;
 
-public class CourseService(AppDbContext context, IImageService imageService) : ICourseService
+public class CourseService(AppDbContext context, IImageService imageService, INotificationService _notificationService) : ICourseService
 {
     public async Task<PagedResult<CourseListItemDto>> GetCoursesAsync(CourseQueryParameters q)
     {
         var query = context.Courses.AsQueryable();
         if (!(q.IncludeUnapproved ?? false))
             query = query.Where(c => c.IsApproved);
-        
+
         if (!(q.IncludeRestricted ?? false))
             query = query.Where(c => !c.IsRestricted);
-        
+
         if (q.CategoryId.HasValue)
             query = query.Where(c => c.CategoryId == q.CategoryId);
 
@@ -78,9 +79,9 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
                 IsApproved = c.IsApproved,
                 IsRestricted = c.IsRestricted,
                 CommentCount = c.Enrollments.Count,
-                CourseContents = c.CourseContents.Select(c => new CourseContentDto{ Id = c.Id, Title = c.Title, Description = c.Description ?? ""}).ToList(),
-                CourseSkills = c.CourseSkills.Select(c => new SkillTargetDto{ Id = c.Id, Description = c.Name}).ToList(),
-                TargetLearners = c.TargetLearners.Select(c => new SkillTargetDto{ Id = c.Id, Description = c.Description}).ToList()
+                CourseContents = c.CourseContents.Select(c => new CourseContentDto { Id = c.Id, Title = c.Title, Description = c.Description ?? "" }).ToList(),
+                CourseSkills = c.CourseSkills.Select(c => new SkillTargetDto { Id = c.Id, Description = c.Name }).ToList(),
+                TargetLearners = c.TargetLearners.Select(c => new SkillTargetDto { Id = c.Id, Description = c.Description }).ToList()
             })
             .ToListAsync();
         return new PagedResult<CourseListItemDto>
@@ -107,9 +108,9 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         if (course == null) return null;
 
         if (isBuyer && (!course.IsApproved || course.IsRestricted)) return null;
-        
+
         var commentCount = course.Reviews.Count;
-        
+
         return new CourseDetailDto
         {
             Id = course.Id,
@@ -131,9 +132,9 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
             Phone = course.Seller.PhoneNumber!,
             CommentCount = commentCount,
             IsRestricted = course.IsRestricted,
-            CourseContents = course.CourseContents.Select(c => new CourseContentDto{ Id = c.Id, Title = c.Title, Description = c.Description}).ToList(),
-            CourseSkills = course.CourseSkills.Select(c => new SkillTargetDto{ Id = c.Id, Description = c.Name}).ToList(),
-            TargetLearners = course.TargetLearners.Select(c => new SkillTargetDto{ Id = c.Id, Description = c.Description}).ToList()
+            CourseContents = course.CourseContents.Select(c => new CourseContentDto { Id = c.Id, Title = c.Title, Description = c.Description }).ToList(),
+            CourseSkills = course.CourseSkills.Select(c => new SkillTargetDto { Id = c.Id, Description = c.Name }).ToList(),
+            TargetLearners = course.TargetLearners.Select(c => new SkillTargetDto { Id = c.Id, Description = c.Description }).ToList()
         };
     }
 
@@ -149,11 +150,11 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
         if (entity.SellerId != sellerId && !isAdmin)
             throw new UnauthorizedException("You do not have permission to view this course students");
         var result = entity.Enrollments.Select(e => new CourseStudentDto
-            {
-                StudentName = e.Buyer!.FullName,
-                PurchasedAmount = entity.Price,
-                EnrollAt = e.EnrollAt
-            })
+        {
+            StudentName = e.Buyer!.FullName,
+            PurchasedAmount = entity.Price,
+            EnrollAt = e.EnrollAt
+        })
             .ToList();
         return result;
     }
@@ -207,7 +208,14 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
 
         context.Courses.Add(entity);
         await context.SaveChangesAsync();
-        
+        var notificationMessage = $"Khóa học '{entity.Title}' đã được tạo thành công và đang chờ duyệt.";
+
+        await _notificationService.CreateNotificationAsync(new CreateNotificationDto
+        {
+            SellerId = userId, // Gửi chính người tạo (Seller)
+            Message = notificationMessage
+        });
+
         return await GetByIdAsync(entity.Id, false) ?? throw new InvalidOperationException("Created but cannot retrieve");
     }
 
@@ -235,7 +243,7 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
             await imageService.DeleteImageAsync(entity.ImageUrl);
             entity.ImageUrl = null;
         }
-        
+
         if (dto.Image != null)
         {
             if (!string.IsNullOrEmpty(entity.ImageUrl))
@@ -256,22 +264,54 @@ public class CourseService(AppDbContext context, IImageService imageService) : I
             throw new InvalidOperationException("Course already approved or cannot approve restricted course");
         course.IsApproved = true;
         if (await context.SaveChangesAsync() < 1) throw new InvalidOperationException("Save changes failed");
+        // --- GỬI THÔNG BÁO ---
+        // Lấy Title đưa vào message cho trực quan
+        var notificationDto = new CreateNotificationDto
+        {
+            SellerId = course.SellerId, // Lấy ID người bán từ khóa học
+            Message = $"Khóa học '{course.Title}' của bạn đã được phê duyệt và sẵn sàng để bán."
+        };
+
+        await _notificationService.CreateNotificationAsync(notificationDto);
     }
-    
+
     public async Task<string> RestrictCourse(int courseId)
     {
         var course = await context.Courses.FindAsync(courseId);
         if (course == null) throw new NotFoundException("Course not found");
+
         if (course is { IsRestricted: false, IsApproved: false })
             throw new InvalidOperationException("Can't restrict unapproved course");
+
+        // Trường hợp: BỎ HẠN CHẾ (Unrestrict)
         if (course.IsRestricted)
         {
             course.IsRestricted = false;
-            if (await context.SaveChangesAsync() < 1) throw new InvalidOperationException("Save changes failed");
+            if (await context.SaveChangesAsync() < 1)
+                throw new InvalidOperationException("Save changes failed");
+
+            // --- GỬI THÔNG BÁO BỎ HẠN CHẾ ---
+            await _notificationService.CreateNotificationAsync(new CreateNotificationDto
+            {
+                SellerId = course.SellerId,
+                Message = $"Khóa học '{course.Title}' của bạn đã được gỡ bỏ hạn chế."
+            });
+
             return "Course Unrestricted";
         }
+
+        // Trường hợp: HẠN CHẾ (Restrict)
         course.IsRestricted = true;
-        if (await context.SaveChangesAsync() < 1) throw new InvalidOperationException("Save changes failed");
+        if (await context.SaveChangesAsync() < 1)
+            throw new InvalidOperationException("Save changes failed");
+
+        // --- GỬI THÔNG BÁO BỊ HẠN CHẾ ---
+        await _notificationService.CreateNotificationAsync(new CreateNotificationDto
+        {
+            SellerId = course.SellerId,
+            Message = $"Khóa học '{course.Title}' của bạn đã bị hạn chế do vi phạm chính sách."
+        });
+
         return "Course Restricted";
     }
 
