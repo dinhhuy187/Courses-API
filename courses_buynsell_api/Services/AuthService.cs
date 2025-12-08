@@ -69,8 +69,8 @@ public class AuthService : IAuthService
         if (user == null || !PasswordHasher.VerifyPassword(dto.Password, user.PasswordHash))
             throw new UnauthorizedException("Incorrect email or password.");
 
-        if (!user.IsEmailVerified)
-            throw new UnauthorizedException("Please verify your email first.");
+        //if (!user.IsEmailVerified)
+        //    throw new UnauthorizedException("Please verify your email first.");
 
         return await GenerateJwtToken(user);
     }
