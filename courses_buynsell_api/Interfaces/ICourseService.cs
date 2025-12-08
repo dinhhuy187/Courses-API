@@ -8,6 +8,8 @@ public interface ICourseService
     Task<PagedResult<CourseListItemDto>> GetCoursesAsync(CourseQueryParameters query);
     Task<CourseDetailDto?> GetByIdAsync(int id, bool isBuyer);
     Task<IEnumerable<CourseStudentDto>> GetCourseStudents(int courseId, int sellerId, bool isAdmin);
+    Task<string> GetCourseLecture(int courseId, int userId);
+    Task<string> EditCourseLecture(int courseId, int userId, string lecture);
     Task<CourseDetailDto> CreateAsync(CreateCourseDto dto, int userId);
     Task<CourseDetailDto?> UpdateAsync(int id, UpdateCourseDto dto, int sellerId);
     Task ApproveCourse(int courseId);
