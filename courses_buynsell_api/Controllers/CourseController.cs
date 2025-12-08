@@ -51,6 +51,23 @@ namespace courses_buynsell_api.Controllers
             return Ok(result);
         }
 
+        [HttpGet("{courseId:int}/study")]
+        public async Task<IActionResult> GetCourseLecture(int courseId)
+        {
+            var userId = int.Parse(User.FindFirst("id")!.Value);
+            var result = await courseService.GetCourseLecture(courseId, userId);
+            return Ok(result);
+        }
+
+        [HttpPut("{courseId:int}/study")]
+        [Authorize(Roles = "Seller")]
+        public async Task<IActionResult> EditCourseLecture([FromBody] CreateCourseLectureDto lectureDto, int courseId)
+        {
+            var userId = int.Parse(User.FindFirst("id")!.Value);
+            var result = await courseService.EditCourseLecture(courseId, userId, lectureDto.Lecture);
+            return Ok(result);
+        }
+
         [HttpPost]
         [Authorize(Roles = "Admin, Seller")]
         public async Task<IActionResult> Create([FromForm] CreateCourseDto createCourseDto)

@@ -159,6 +159,39 @@ public class CourseService(AppDbContext context, IImageService imageService, INo
         return result;
     }
 
+    public async Task<string> GetCourseLecture(int courseId, int userId)
+    {
+        var course = await context.Courses
+            .AsNoTracking()
+            .Include(c => c.Enrollments)
+            .FirstOrDefaultAsync(c  => c.Id == courseId);
+        if (course == null)
+            throw new NotFoundException("Course not found");
+        var user = await context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId);
+        if (user!.Role.Equals("Admin") || course.SellerId == userId ||
+            course.Enrollments.Any(e => e.BuyerId == userId))
+        {
+            return course.CourseLecture ?? "No lecture found";
+        }
+        throw new UnauthorizedException("You do not have permission to view this course lecture");
+    }
+
+    public async Task<string> EditCourseLecture(int courseId, int userId, string lecture)
+    {
+        var course = await context.Courses
+            .FirstOrDefaultAsync(c => c.Id == courseId);
+        if (course == null)
+            throw new NotFoundException("Course not found");
+        if (course.SellerId != userId)
+            throw new UnauthorizedException("You do not have permission to edit this course lecture");
+        course.CourseLecture = lecture;
+        if (await context.SaveChangesAsync() < 1)
+            throw new Exception("Save failed");
+        return course.CourseLecture ?? "No lecture found";
+    }
+
     public async Task<CourseDetailDto> CreateAsync(CreateCourseDto dto, int userId)
     {
         var entity = new Course
