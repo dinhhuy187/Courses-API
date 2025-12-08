@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS public."Courses"
     "CategoryId" integer NOT NULL,
     "IsApproved" boolean NOT NULL DEFAULT false,
     "IsRestricted" boolean NOT NULL DEFAULT false,
+    "CourseLecture" text COLLATE pg_catalog."default",
     CONSTRAINT "PK_Courses" PRIMARY KEY ("Id")
 );
 

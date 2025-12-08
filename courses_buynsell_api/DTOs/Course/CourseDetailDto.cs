@@ -8,6 +8,7 @@ public class CourseDetailDto : CourseListItemDto
     public string Email { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
     public int CommentCount { get; set; }
+    public string CourseLecture { get; set; } = string.Empty;
     
     public List<CourseContentDto>? CourseContents { get; set; }
     public List<SkillTargetDto>? CourseSkills { get; set; }

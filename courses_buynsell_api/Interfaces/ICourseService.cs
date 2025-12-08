@@ -6,7 +6,7 @@ namespace courses_buynsell_api.Interfaces;
 public interface ICourseService
 {
     Task<PagedResult<CourseListItemDto>> GetCoursesAsync(CourseQueryParameters query);
-    Task<CourseDetailDto?> GetByIdAsync(int id, bool isBuyer);
+    Task<CourseDetailDto?> GetByIdAsync(int id, int userId);
     Task<IEnumerable<CourseStudentDto>> GetCourseStudents(int courseId, int sellerId, bool isAdmin);
     Task<string> GetCourseLecture(int courseId, int userId);
     Task<string> EditCourseLecture(int courseId, int userId, string lecture);

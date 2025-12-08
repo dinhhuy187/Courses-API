@@ -36,7 +36,14 @@ namespace courses_buynsell_api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetById(int id)
         {
-            var course = await courseService.GetByIdAsync(id,!(User.IsInRole("Admin")||User.IsInRole("Seller")));
+            int userId = 0;
+            var Id = User.FindFirst("id")?.Value;
+            if (Id != null)
+            {
+                userId = int.Parse(Id);
+            }
+
+            var course = await courseService.GetByIdAsync(id, userId);
             if (course == null) return NotFound();
             return Ok(course);
         }

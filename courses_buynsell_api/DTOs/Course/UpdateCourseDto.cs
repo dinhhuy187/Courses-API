@@ -13,4 +13,5 @@ public class UpdateCourseDto
     public int? DurationHours { get; set; }
     public int? CategoryId { get; set; }
     public bool DeleteImage { get; set; } = false;
+    public string? CourseLecture { get; set; }
 }

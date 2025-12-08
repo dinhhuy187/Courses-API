@@ -93,7 +93,7 @@ public class CourseService(AppDbContext context, IImageService imageService, INo
         };
     }
 
-    public async Task<CourseDetailDto?> GetByIdAsync(int id, bool isBuyer)
+    public async Task<CourseDetailDto?> GetByIdAsync(int id, int userId)
     {
         var course = await context.Courses
             .AsNoTracking()
@@ -103,15 +103,14 @@ public class CourseService(AppDbContext context, IImageService imageService, INo
             .Include(c => c.Category)
             .Include(c => c.Seller)
             .Include(c => c.Reviews)
+            .Include(c => c.Enrollments)
             .FirstOrDefaultAsync(c => c.Id == id);
 
         if (course == null) return null;
-
-        if (isBuyer && (!course.IsApproved || course.IsRestricted)) return null;
-
+        
         var commentCount = course.Reviews.Count;
-
-        return new CourseDetailDto
+        
+        var result = new CourseDetailDto
         {
             Id = course.Id,
             Title = course.Title,
@@ -136,6 +135,22 @@ public class CourseService(AppDbContext context, IImageService imageService, INo
             CourseSkills = course.CourseSkills.Select(c => new SkillTargetDto { Id = c.Id, Description = c.Name }).ToList(),
             TargetLearners = course.TargetLearners.Select(c => new SkillTargetDto { Id = c.Id, Description = c.Description }).ToList()
         };
+        
+        var user = await context.Users.FindAsync(userId);
+        
+        if (user == null )
+        {
+            if (!course.IsApproved || course.IsRestricted)
+                return null;
+            return result;
+        }
+
+        if (user.Role.Equals("Buyer") && (!course.IsApproved || course.IsRestricted)) return null;
+        
+        if (user.Role.Equals("Admin") || course.Enrollments.Any(e => e.BuyerId == userId) || course.SellerId == userId)
+            result.CourseLecture = course.CourseLecture ?? "No lecture found";
+        Console.WriteLine($"Added course lecture with value {result.CourseLecture}");
+        return result;
     }
 
     public async Task<IEnumerable<CourseStudentDto>> GetCourseStudents(int courseId, int sellerId, bool isAdmin)
@@ -249,7 +264,7 @@ public class CourseService(AppDbContext context, IImageService imageService, INo
             Message = notificationMessage
         });
 
-        return await GetByIdAsync(entity.Id, false) ?? throw new InvalidOperationException("Created but cannot retrieve");
+        return await GetByIdAsync(entity.Id, 0) ?? throw new InvalidOperationException("Created but cannot retrieve");
     }
 
     public async Task<CourseDetailDto?> UpdateAsync(int id, UpdateCourseDto dto, int sellerId)
@@ -270,6 +285,7 @@ public class CourseService(AppDbContext context, IImageService imageService, INo
         entity.DurationHours = dto.DurationHours ?? entity.DurationHours;
         entity.CategoryId = dto.CategoryId ?? entity.CategoryId;
         entity.UpdatedAt = DateTime.UtcNow;
+        entity.CourseLecture = dto.CourseLecture;
 
         if (dto.DeleteImage && !string.IsNullOrEmpty(entity.ImageUrl))
         {
@@ -286,7 +302,7 @@ public class CourseService(AppDbContext context, IImageService imageService, INo
         }
 
         await context.SaveChangesAsync();
-        return await GetByIdAsync(entity.Id, false);
+        return await GetByIdAsync(entity.Id, 0);
     }
 
     public async Task ApproveCourse(int courseId)
