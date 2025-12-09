@@ -113,6 +113,16 @@ public class ReviewService : IReviewService
     */
     public async Task CreateReview(ReviewRequestDto reviewDto, int buyerId)
     {
+        // 1. Kiểm tra xem buyer đã mua khóa học hay chưa
+        bool hasBought = await _context.Enrollments
+            .AnyAsync(e => e.BuyerId == buyerId && e.CourseId == reviewDto.CourseId);
+
+        if (!hasBought)
+        {
+            throw new BadRequestException("Bạn chưa mua khóa học này nên không thể đánh giá.");
+        }
+
+        // 2. Tạo review
         var review = new Review
         {
             BuyerId = buyerId,
@@ -125,6 +135,7 @@ public class ReviewService : IReviewService
         _context.Reviews.Add(review);
         await _context.SaveChangesAsync();
     }
+
 
     /*
     Phương thức PUT
