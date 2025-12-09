@@ -107,9 +107,9 @@ public class CourseService(AppDbContext context, IImageService imageService, INo
             .FirstOrDefaultAsync(c => c.Id == id);
 
         if (course == null) return null;
-        
+
         var commentCount = course.Reviews.Count;
-        
+
         var result = new CourseDetailDto
         {
             Id = course.Id,
@@ -135,10 +135,10 @@ public class CourseService(AppDbContext context, IImageService imageService, INo
             CourseSkills = course.CourseSkills.Select(c => new SkillTargetDto { Id = c.Id, Description = c.Name }).ToList(),
             TargetLearners = course.TargetLearners.Select(c => new SkillTargetDto { Id = c.Id, Description = c.Description }).ToList()
         };
-        
+
         var user = await context.Users.FindAsync(userId);
-        
-        if (user == null )
+
+        if (user == null)
         {
             if (!course.IsApproved || course.IsRestricted)
                 return null;
@@ -146,7 +146,7 @@ public class CourseService(AppDbContext context, IImageService imageService, INo
         }
 
         if (user.Role.Equals("Buyer") && (!course.IsApproved || course.IsRestricted)) return null;
-        
+
         if (user.Role.Equals("Admin") || course.Enrollments.Any(e => e.BuyerId == userId) || course.SellerId == userId)
             result.CourseLecture = course.CourseLecture ?? "No lecture found";
         Console.WriteLine($"Added course lecture with value {result.CourseLecture}");
@@ -179,7 +179,7 @@ public class CourseService(AppDbContext context, IImageService imageService, INo
         var course = await context.Courses
             .AsNoTracking()
             .Include(c => c.Enrollments)
-            .FirstOrDefaultAsync(c  => c.Id == courseId);
+            .FirstOrDefaultAsync(c => c.Id == courseId);
         if (course == null)
             throw new NotFoundException("Course not found");
         var user = await context.Users
@@ -222,7 +222,9 @@ public class CourseService(AppDbContext context, IImageService imageService, INo
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             IsApproved = false,
-            IsRestricted = false
+            IsRestricted = false,
+            CourseLecture = dto.Lecture
+
         };
 
         if (dto.CourseContents != null)
