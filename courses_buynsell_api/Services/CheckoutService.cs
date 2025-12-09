@@ -16,6 +16,7 @@ public class CheckoutService : ICheckoutService
     private readonly AppDbContext _context;
     private readonly INotificationService _notificationService;
     private readonly IMemoryCache _cache;
+    private readonly ICartService _cartService;
     private readonly ILogger<CheckoutService> _logger;
 
     public CheckoutService(
@@ -23,12 +24,14 @@ public class CheckoutService : ICheckoutService
         AppDbContext context,
         INotificationService notificationService,
         IMemoryCache cache,
+        ICartService cartService,
         ILogger<CheckoutService> logger)
     {
         _momo = momoOptions.Value;
         _context = context;
         _notificationService = notificationService;
         _cache = cache;
+        _cartService = cartService;
         _logger = logger;
     }
 
@@ -201,6 +204,8 @@ public class CheckoutService : ICheckoutService
                         amount: course.Price,
                         courseName: course.Title
                     );
+                    await _cartService.RemoveItemAsync(paymentInfo.BuyerId, courseId);
+
                 }
             }
 
