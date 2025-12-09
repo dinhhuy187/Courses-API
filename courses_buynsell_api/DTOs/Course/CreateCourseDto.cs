@@ -11,7 +11,7 @@ public class CreateCourseDto
     public string Level { get; set; } = string.Empty;
     public IFormFile? Image { get; set; }
     public int DurationHours { get; set; }
-    public string Lecture { get; set; } = string.Empty;
+    public string CourseLecture { get; set; } = string.Empty;
     public int CategoryId { get; set; }
     public List<CourseContentDto>? CourseContents { get; set; }
     public List<SkillTargetDto>? CourseSkills { get; set; }

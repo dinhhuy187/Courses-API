@@ -27,7 +27,7 @@ public class HistoryController(IHistoryService service) : ControllerBase
         var result = await service.AddHistoryAsync(userId, courseId);
         if (!result)
         {
-            return BadRequest(new { message = "Conflicted or course not allowed" });
+            return BadRequest(new { message = "Course not allowed" });
         }
 
         return StatusCode(201);

@@ -223,7 +223,7 @@ public class CourseService(AppDbContext context, IImageService imageService, INo
             UpdatedAt = DateTime.UtcNow,
             IsApproved = false,
             IsRestricted = false,
-            CourseLecture = dto.Lecture
+            CourseLecture = dto.CourseLecture
 
         };
 
@@ -266,7 +266,7 @@ public class CourseService(AppDbContext context, IImageService imageService, INo
             Message = notificationMessage
         });
 
-        return await GetByIdAsync(entity.Id, 0) ?? throw new InvalidOperationException("Created but cannot retrieve");
+        return await GetByIdAsync(entity.Id, userId) ?? throw new InvalidOperationException("Created but cannot retrieve");
     }
 
     public async Task<CourseDetailDto?> UpdateAsync(int id, UpdateCourseDto dto, int sellerId)
@@ -304,7 +304,7 @@ public class CourseService(AppDbContext context, IImageService imageService, INo
         }
 
         await context.SaveChangesAsync();
-        return await GetByIdAsync(entity.Id, 0);
+        return await GetByIdAsync(entity.Id, sellerId);
     }
 
     public async Task ApproveCourse(int courseId)
