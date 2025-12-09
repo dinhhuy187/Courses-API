@@ -97,6 +97,7 @@ CREATE TABLE IF NOT EXISTS public."Histories"
 (
     "UserId" integer NOT NULL,
     "CourseId" integer NOT NULL,
+    "CreatedAt" timestamp with time zone NOT NULL DEFAULT '-infinity'::timestamp with time zone,
     CONSTRAINT "PK_Histories" PRIMARY KEY ("UserId", "CourseId")
 );
 
