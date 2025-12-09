@@ -16,66 +16,61 @@ public class HistoryService(AppDbContext context) : IHistoryService
         if (user == null)
             throw new NotFoundException("User not found");
         
-        var query = context.Courses.AsQueryable();
+        var query = context.Histories.AsQueryable();
         
-        query = query.Where(c => c.Histories.Any(h => h.UserId == userId));
-        query = query.Where(c => c.IsApproved);
-        query = query.Where(c => !c.IsRestricted);
+        query = query.Where(h => h.UserId == userId);
+        query = query.Include(h => h.Course);
+        
+        query = query.Where(h => h.Course!.IsApproved);
+        query = query.Where(h => !h.Course!.IsRestricted);
         
         if (q.CategoryId.HasValue)
-            query = query.Where(c => c.CategoryId == q.CategoryId);
+            query = query.Where(h => h.Course!.CategoryId == q.CategoryId);
 
         if (q.SellerId.HasValue)
-            query = query.Where(c => c.SellerId == q.SellerId);
+            query = query.Where(h => h.Course!.SellerId == q.SellerId);
 
         if (!string.IsNullOrWhiteSpace(q.Level))
-            query = query.Where(c => c.Level == q.Level);
+            query = query.Where(h => h.Course!.Level == q.Level);
 
         if (q.MinPrice.HasValue)
-            query = query.Where(c => c.Price >= q.MinPrice.Value);
+            query = query.Where(h => h.Course!.Price >= q.MinPrice.Value);
 
         if (q.MaxPrice.HasValue)
-            query = query.Where(c => c.Price <= q.MaxPrice.Value);
+            query = query.Where(h => h.Course!.Price <= q.MaxPrice.Value);
 
         if (!string.IsNullOrWhiteSpace(q.Q))
         {
             var text = q.Q.Trim();
-            query = query.Where(c =>
-                c.Title.Contains(text) ||
-                c.Description.Contains(text));
+            query = query.Where(h =>
+                h.Course!.Title.Contains(text) ||
+                h.Course!.Description.Contains(text));
         }
 
-        query = q.SortBy?.ToLower() switch
-        {
-            "price_asc" => query.OrderBy(c => c.Price),
-            "price_desc" => query.OrderByDescending(c => c.Price),
-            "rating_desc" => query.OrderByDescending(c => c.AverageRating),
-            "popular" => query.OrderByDescending(c => c.TotalPurchased),
-            _ => query.OrderByDescending(c => c.CreatedAt)
-        };
+        query = query.OrderByDescending(h => h.CreatedAt);
 
-        query = query.Include(c => c.Category);
+        query = query.Include(h => h.Course!.Category);
 
         var total = await query.LongCountAsync();
         var items = await query
             .Skip((q.Page - 1) * q.PageSize)
             .Take(q.PageSize)
-            .Select(c => new CourseListItemDto
+            .Select(h => new CourseListItemDto
             {
-                Id = c.Id,
-                Title = c.Title,
-                Price = c.Price,
-                Level = c.Level,
-                ImageUrl = c.ImageUrl,
-                AverageRating = c.AverageRating,
-                TotalPurchased = c.TotalPurchased,
-                SellerId = c.SellerId,
-                TeacherName = c.TeacherName,
-                Description = c.Description,
-                DurationHours = c.DurationHours,
-                CategoryName = c.Category!.Name,
-                IsApproved = c.IsApproved,
-                IsRestricted = c.IsRestricted
+                Id = h.Course!.Id,
+                Title = h.Course!.Title,
+                Price = h.Course!.Price,
+                Level = h.Course!.Level,
+                ImageUrl = h.Course!.ImageUrl,
+                AverageRating = h.Course!.AverageRating,
+                TotalPurchased = h.Course!.TotalPurchased,
+                SellerId = h.Course!.SellerId,
+                TeacherName = h.Course!.TeacherName,
+                Description = h.Course!.Description,
+                DurationHours = h.Course!.DurationHours,
+                CategoryName = h.Course!.Category!.Name,
+                IsApproved = h.Course!.IsApproved,
+                IsRestricted = h.Course!.IsRestricted
             })
             .ToListAsync();
         return new PagedResult<CourseListItemDto>
@@ -93,21 +88,24 @@ public class HistoryService(AppDbContext context) : IHistoryService
             .FirstOrDefaultAsync(f => f.UserId == userId && f.CourseId == courseId);
         if (existingHistory != null)
         {
-            return false;
+            existingHistory.CreatedAt = DateTime.UtcNow;
         }
-        
-        var course = await context.Courses.FindAsync(courseId);
-        if (course == null || course.IsRestricted || !course.IsApproved) 
-            return false;
-        
-        var history = new History
+        else
         {
-            UserId = userId,
-            CourseId = courseId
-        };
-        context.Histories.Add(history);
-        await context.SaveChangesAsync();
-        return true;
+            var course = await context.Courses.FindAsync(courseId);
+            if (course == null || course.IsRestricted || !course.IsApproved)
+                return false;
+
+            var history = new History
+            {
+                UserId = userId,
+                CourseId = courseId,
+                CreatedAt = DateTime.UtcNow
+            };
+            context.Histories.Add(history);
+        }
+
+        return await context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> ClearHistoriesAsync(int userId)
