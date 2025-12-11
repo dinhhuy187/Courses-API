@@ -113,13 +113,27 @@ public class ReviewService : IReviewService
     */
     public async Task CreateReview(ReviewRequestDto reviewDto, int buyerId)
     {
-        // 1. Kiểm tra xem buyer đã mua khóa học hay chưa
-        bool hasBought = await _context.Enrollments
-            .AnyAsync(e => e.BuyerId == buyerId && e.CourseId == reviewDto.CourseId);
+        // 0. Lấy role của user
+        var user = await _context.Users
+            .Where(u => u.Id == buyerId)
+            .Select(u => new { u.Id, u.Role })
+            .FirstOrDefaultAsync();
 
-        if (!hasBought)
+        if (user == null)
+            throw new NotFoundException("User not found");
+
+        bool isAdmin = user.Role == "Admin";
+
+        // 1. Kiểm tra mua khóa học nếu không phải admin
+        if (!isAdmin)
         {
-            throw new BadRequestException("Bạn chưa mua khóa học này nên không thể đánh giá.");
+            bool hasBought = await _context.Enrollments
+                .AnyAsync(e => e.BuyerId == buyerId && e.CourseId == reviewDto.CourseId);
+
+            if (!hasBought)
+            {
+                throw new BadRequestException("Bạn chưa mua khóa học này nên không thể đánh giá.");
+            }
         }
 
         // 2. Tạo review
