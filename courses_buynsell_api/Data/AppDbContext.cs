@@ -29,6 +29,10 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.Entity<Category>()
+        .HasIndex(c => c.Name)
+        .IsUnique();
+
         // ✅ Composite key cho Favorite
         modelBuilder.Entity<Favorite>()
             .HasKey(f => new { f.UserId, f.CourseId });

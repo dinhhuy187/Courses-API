@@ -66,8 +66,13 @@ public class DashboardController : ControllerBase
     // Thống kê doanh thu 12 tháng gần nhất của seller
     [HttpGet("seller/revenue")]
     [Authorize(Roles = "Seller, Admin")]
-    public async Task<ActionResult<List<MonthlyRevenueDto>>> GetSellerMonthlyRevenue(int sellerId)
+    public async Task<ActionResult<List<MonthlyRevenueDto>>> GetSellerMonthlyRevenue()
     {
+        int sellerId = HttpContext.Items["UserId"] as int? ?? -1;
+        if (sellerId == -1)
+        {
+            return Unauthorized(new { message = "Không xác định được người dùng hiện tại." });
+        }
         var result = await _service.GetSellerMonthlyRevenueAsync(sellerId);
         return Ok(result);
     }

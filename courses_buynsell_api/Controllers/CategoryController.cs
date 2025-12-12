@@ -92,6 +92,10 @@ public class CategoryController : ControllerBase
         {
             return NotFound(new { message = ex.Message });
         }
+        catch (BadRequestException ex)
+        {
+            return StatusCode(400, new { message = ex.Message });
+        }
         catch (Exception ex)
         {
             return StatusCode(500, new { message = ex.Message });
