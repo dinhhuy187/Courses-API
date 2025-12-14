@@ -61,6 +61,7 @@ VALUES
 -- =============================================
 INSERT INTO public."Categories" ("Name", "CreatedAt")
 VALUES
+('Khác', NOW() - INTERVAL '365 days'),
 ('Lập Trình', NOW() - INTERVAL '365 days'),
 ('Thiết Kế', NOW() - INTERVAL '365 days'),
 ('Kinh Doanh', NOW() - INTERVAL '365 days'),
