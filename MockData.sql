@@ -1,14 +1,20 @@
--- =====================================================
--- INSERT USERS (Người dùng)
--- =====================================================
+-- =============================================
+-- COMPLETE SAMPLE DATA FOR COURSEHUB DATABASE
+-- Date: 16/12/2025
+-- =============================================
+
+BEGIN;
+
+-- =============================================
+-- 1. USERS (Cập nhật IsEmailVerified = true)
+-- =============================================
 INSERT INTO public."Users" 
 ("FullName", "Email", "PasswordHash", "Role", "CreatedAt", "PhoneNumber", "IsEmailVerified", "RefreshToken", "RefreshTokenExpiryTime", "AvatarUrl")
 VALUES
--- Admin mặc định
+-- Admin
 ('Nguyễn Văn Admin', 'admin@coursehub.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Admin', NOW() - INTERVAL '365 days', '0901234567', true, NULL, NULL,
  'https://cdn.tgdd.vn/Products/Images/44/335362/macbook-air-13-inch-m4-xanh-da-troi-600x600.jpg'),
 
--- Admin mới thêm
 ('Sang', 'sang@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Admin', NOW() - INTERVAL '300 days', '0900000000', true, NULL, NULL,
  'https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/327098/hp-15-fc0085au-r5-a6vv8pa-170225-110652-878-600x600.jpg'),
 
@@ -16,7 +22,7 @@ VALUES
 ('Trần Thị Hoa', 'hoa.tran@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Seller', NOW() - INTERVAL '200 days', '0912345678', true, NULL, NULL,
  'https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358086/macbook-pro-14-inch-m5-16gb-512gb-thumb-638962954605863722-600x600.jpg'),
 
-('Lê Văn Minh', 'minh.le@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Seller', NOW() - INTERVAL '180 days', '0923456789', false, NULL, NULL,
+('Lê Văn Minh', 'minh.le@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Seller', NOW() - INTERVAL '180 days', '0923456789', true, NULL, NULL,
  'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/a/samsung-galaxy-z-flip-7-1.jpg'),
 
 ('Phạm Thị Lan', 'lan.pham@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Seller', NOW() - INTERVAL '150 days', '0934567890', true, NULL, NULL,
@@ -29,7 +35,7 @@ VALUES
 ('Đỗ Văn Hùng', 'hung.do@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '100 days', '0956789012', true, NULL, NULL,
  'https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358086/macbook-pro-14-inch-m5-16gb-512gb-thumb-638962954605863722-600x600.jpg'),
 
-('Vũ Thị Mai', 'mai.vu@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '90 days', '0967890123', false, NULL, NULL,
+('Vũ Thị Mai', 'mai.vu@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '90 days', '0967890123', true, NULL, NULL,
  'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/a/samsung-galaxy-z-flip-7-1.jpg'),
 
 ('Bùi Văn Tuấn', 'tuan.bui@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '80 days', '0978901234', true, NULL, NULL,
@@ -38,290 +44,449 @@ VALUES
 ('Đinh Thị Hương', 'huong.dinh@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '70 days', '0989012345', true, NULL, NULL,
  'https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/327098/hp-15-fc0085au-r5-a6vv8pa-170225-110652-878-600x600.jpg'),
 
-('Ngô Văn Long', 'long.ngo@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '60 days', '0990123456', false, NULL, NULL,
+('Ngô Văn Long', 'long.ngo@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '60 days', '0990123456', true, NULL, NULL,
  'https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358086/macbook-pro-14-inch-m5-16gb-512gb-thumb-638962954605863722-600x600.jpg'),
 
 ('Trương Thị Thu', 'thu.truong@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '50 days', '0901234568', true, NULL, NULL,
+ 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/a/samsung-galaxy-z-flip-7-1.jpg'),
+
+('Nguyễn Văn An', 'an.nguyen@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Buyer', NOW() - INTERVAL '50 days', '0901234568', true, NULL, NULL,
+ 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/a/samsung-galaxy-z-flip-7-1.jpg'),
+
+('Trương Thị Hương', 'huong.tran@gmail.com', 'Y6IE4cbribo1c2b2aq4IJg==.VJbIsl4pg2TOL3ZL4Xf2Pneez/s756/dq6ej15kjDPc=', 'Seller', NOW() - INTERVAL '50 days', '0901234568', true, NULL, NULL,
  'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/a/samsung-galaxy-z-flip-7-1.jpg');
 
-
--- =====================================================
--- INSERT CATEGORIES (Danh mục khóa học)
--- =====================================================
+-- =============================================
+-- 2. CATEGORIES
+-- =============================================
 INSERT INTO public."Categories" ("Name", "CreatedAt")
 VALUES
-('Lập trình Web', NOW() - INTERVAL '400 days'),
-('Lập trình Mobile', NOW() - INTERVAL '390 days'),
-('Data Science', NOW() - INTERVAL '380 days'),
-('Thiết kế đồ họa', NOW() - INTERVAL '370 days'),
-('Marketing Digital', NOW() - INTERVAL '360 days'),
-('Kinh doanh', NOW() - INTERVAL '350 days'),
-('Ngoại ngữ', NOW() - INTERVAL '340 days'),
-('Phát triển cá nhân', NOW() - INTERVAL '330 days');
+('Lập Trình', NOW() - INTERVAL '365 days'),
+('Thiết Kế', NOW() - INTERVAL '365 days'),
+('Kinh Doanh', NOW() - INTERVAL '365 days'),
+('Marketing', NOW() - INTERVAL '365 days'),
+('Phát Triển Cá Nhân', NOW() - INTERVAL '365 days'),
+('Ngôn Ngữ', NOW() - INTERVAL '365 days');
 
--- =====================================================
--- INSERT COURSES (Khóa học)
--- =====================================================
+-- =============================================
+-- 3. COURSES (8 khóa học)
+-- =============================================
 INSERT INTO public."Courses" 
-("Title", "Description", "Price", "Level", "TeacherName", "ImageUrl", "DurationHours", "TotalPurchased", "AverageRating", "CreatedAt", "UpdatedAt", "SellerId", "CategoryId", "IsApproved")
+("Title", "Description", "Price", "Level", "TeacherName", "ImageUrl", "DurationHours", 
+ "TotalPurchased", "AverageRating", "CreatedAt", "UpdatedAt", "SellerId", "CategoryId", 
+ "IsApproved", "IsRestricted", "CourseLecture")
 VALUES
--- Khóa học đã được duyệt
-('Lập trình React từ cơ bản đến nâng cao', 'Khóa học giúp bạn nắm vững React, từ JSX, Components đến Hooks và Redux. Phù hợp cho người mới bắt đầu.', 1500000, 'Beginner', 'Trần Thị Hoa', 'https://images.unsplash.com/photo-1633356122544-f134324a6cee', 40, 150, 4.8, NOW() - INTERVAL '180 days', NOW() - INTERVAL '10 days', 2, 1, true),
+-- Course 1 - Trương Thị Hương (SellerId = 14)
+('Full Stack Web Development 2025', 'Khóa học lập trình web toàn diện từ cơ bản đến nâng cao', 2500000, 'Intermediate', 'Trương Thị Hương',
+ 'https://images.unsplash.com/photo-1633356122544-f134324a6cee', 120, 145, 4.7,
+ NOW() - INTERVAL '180 days', NOW() - INTERVAL '5 days', 14, 1, true, false,
+ 'Giới thiệu về HTML, CSS, JavaScript, React, Node.js và MongoDB'),
 
-('Python cho Data Science', 'Học Python từ đầu, pandas, numpy, matplotlib và các thuật toán Machine Learning cơ bản.', 2000000, 'Intermediate', 'Phạm Thị Lan', 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935', 50, 200, 4.9, NOW() - INTERVAL '150 days', NOW() - INTERVAL '5 days', 4, 3, true),
+-- Course 2 - Trương Thị Hương (SellerId = 14)
+('UI/UX Design Masterclass', 'Thiết kế giao diện và trải nghiệm người dùng chuyên nghiệp', 1800000, 'Beginner', 'Trương Thị Hương',
+ 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935', 80, 98, 4.6,
+ NOW() - INTERVAL '150 days', NOW() - INTERVAL '10 days', 14, 2, true, false,
+ 'Figma, Adobe XD, Design Thinking, User Research'),
 
-('Flutter - Xây dựng ứng dụng di động đa nền tảng', 'Khóa học Flutter giúp bạn tạo ứng dụng iOS và Android từ một mã nguồn duy nhất.', 1800000, 'Beginner', 'Hoàng Văn Nam', 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c', 45, 120, 4.7, NOW() - INTERVAL '120 days', NOW() - INTERVAL '8 days', 5, 2, true),
+-- Course 3 - Trần Thị Hoa (SellerId = 3)
+('Digital Marketing Strategy', 'Chiến lược marketing online hiệu quả cho doanh nghiệp', 1500000, 'Intermediate', 'Trần Thị Hoa',
+ 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c', 60, 187, 4.8,
+ NOW() - INTERVAL '200 days', NOW() - INTERVAL '3 days', 3, 4, true, false,
+ 'SEO, SEM, Social Media Marketing, Content Marketing, Analytics'),
 
-('Adobe Photoshop cho người mới bắt đầu', 'Khóa học Photoshop từ A-Z, thiết kế banner, poster, chỉnh sửa ảnh chuyên nghiệp.', 1200000, 'Beginner', 'Trần Thị Hoa', 'https://images.unsplash.com/photo-1626785774573-4b799315345d', 30, 180, 4.6, NOW() - INTERVAL '100 days', NOW() - INTERVAL '12 days', 2, 4, true),
+-- Course 4 - Lê Văn Minh (SellerId = 4)
+('Python for Data Science', 'Phân tích dữ liệu và Machine Learning với Python', 2200000, 'Advanced', 'Lê Văn Minh',
+ 'https://images.unsplash.com/photo-1626785774573-4b799315345d', 100, 76, 4.5,
+ NOW() - INTERVAL '160 days', NOW() - INTERVAL '7 days', 4, 1, true, false,
+ 'NumPy, Pandas, Matplotlib, Scikit-learn, TensorFlow'),
 
-('Marketing trên Facebook & Instagram', 'Chiến lược marketing hiệu quả trên mạng xã hội, chạy quảng cáo Facebook Ads và Instagram Ads.', 1000000, 'Beginner', 'Lê Văn Minh', 'https://images.unsplash.com/photo-1611162617474-5b21e879e113', 25, 250, 4.5, NOW() - INTERVAL '90 days', NOW() - INTERVAL '15 days', 3, 5, true),
+-- Course 5 - Phạm Thị Lan (SellerId = 5)
+('Business Management Fundamentals', 'Kiến thức cơ bản về quản trị kinh doanh', 1200000, 'Beginner', 'Phạm Thị Lan',
+ 'https://images.unsplash.com/photo-1611162617474-5b21e879e113', 50, 134, 4.4,
+ NOW() - INTERVAL '140 days', NOW() - INTERVAL '12 days', 5, 3, true, false,
+ 'Strategic Planning, Finance, HR, Operations Management'),
 
--- Khóa học chưa được duyệt
-('Node.js và Express - Backend Development', 'Xây dựng RESTful API với Node.js, Express, MongoDB. Tích hợp JWT authentication.', 1700000, 'Intermediate', 'Lê Văn Minh', 'https://images.unsplash.com/photo-1627398242454-45a1465c2479', 38, 0, 0, NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days', 3, 1, false),
+-- Course 6 - Hoàng Văn Nam (SellerId = 6)
+('Mobile App Development with Flutter', 'Xây dựng ứng dụng di động đa nền tảng', 2800000, 'Intermediate', 'Hoàng Văn Nam',
+ 'https://images.unsplash.com/photo-1627398242454-45a1465c2479', 90, 112, 4.9,
+ NOW() - INTERVAL '120 days', NOW() - INTERVAL '8 days', 6, 1, true, false,
+ 'Flutter, Dart, Firebase, State Management, API Integration'),
 
-('Tiếng Anh giao tiếp cơ bản', 'Học tiếng Anh giao tiếp hàng ngày, phát âm chuẩn, từ vựng thực tế.', 800000, 'Beginner', 'Phạm Thị Lan', 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d', 35, 0, 0, NOW() - INTERVAL '20 days', NOW() - INTERVAL '20 days', 4, 7, false),
+-- Course 7 - Trương Thị Hương (SellerId = 14)
+('English for Business Communication', 'Tiếng Anh giao tiếp trong môi trường doanh nghiệp', 1600000, 'Intermediate', 'Trương Thị Hương',
+ 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d', 70, 156, 4.7,
+ NOW() - INTERVAL '100 days', NOW() - INTERVAL '6 days', 14, 6, true, false,
+ 'Business Writing, Presentation Skills, Negotiation, Email Communication'),
 
-('Quản trị doanh nghiệp hiện đại', 'Các kỹ năng quản lý, lãnh đạo, xây dựng đội nhóm và phát triển doanh nghiệp bền vững.', 2500000, 'Advanced', 'Hoàng Văn Nam', 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40', 60, 0, 0, NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days', 5, 6, false);
+-- Course 8 - Trần Thị Hoa (SellerId = 3)
+('Financial Analysis and Investment', 'Phân tích tài chính và đầu tư chứng khoán', 1900000, 'Advanced', 'Trần Thị Hoa',
+ 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40', 85, 89, 4.6,
+ NOW() - INTERVAL '90 days', NOW() - INTERVAL '4 days', 3, 3, true, false,
+ 'Financial Statements, Valuation, Portfolio Management, Risk Analysis');
 
--- =====================================================
--- INSERT COURSE CONTENTS (Nội dung khóa học)
--- =====================================================
+-- =============================================
+-- 4. COURSE CONTENTS
+-- =============================================
 INSERT INTO public."CourseContents" ("Title", "Description", "CourseId")
 VALUES
--- Course 1: React
-('Giới thiệu về React', 'Tổng quan về React, JSX và Virtual DOM', 1),
-('Components và Props', 'Cách tạo và sử dụng components, truyền props', 1),
-('State và Lifecycle', 'Quản lý state, lifecycle methods trong React', 1),
-('React Hooks', 'useState, useEffect, useContext và custom hooks', 1),
-('Redux cơ bản', 'State management với Redux', 1),
+-- Course 1
+('Giới thiệu về Web Development', 'Tổng quan về lập trình web và các công nghệ cần thiết', 1),
+('HTML & CSS Basics', 'Nền tảng về HTML5 và CSS3', 1),
+('JavaScript Fundamentals', 'Lập trình JavaScript cơ bản và nâng cao', 1),
+('React Framework', 'Xây dựng giao diện với React', 1),
+('Backend với Node.js', 'Lập trình server-side với Node.js và Express', 1),
 
--- Course 2: Python Data Science
-('Python cơ bản', 'Cú pháp Python, biến, vòng lặp, hàm', 2),
-('Pandas và NumPy', 'Xử lý dữ liệu với Pandas và NumPy', 2),
-('Visualization với Matplotlib', 'Vẽ biểu đồ và trực quan hóa dữ liệu', 2),
-('Machine Learning cơ bản', 'Thuật toán Linear Regression, Decision Tree', 2),
+-- Course 2
+('Introduction to UI/UX', 'Khái niệm về thiết kế giao diện và trải nghiệm người dùng', 2),
+('Design Principles', 'Nguyên tắc thiết kế cơ bản', 2),
+('Figma Mastery', 'Làm chủ công cụ Figma', 2),
+('User Research', 'Nghiên cứu người dùng và phân tích hành vi', 2),
 
--- Course 3: Flutter
-('Dart programming', 'Ngôn ngữ Dart cơ bản cho Flutter', 3),
-('Flutter Widgets', 'StatelessWidget, StatefulWidget, Material Design', 3),
-('Navigation và Routing', 'Điều hướng giữa các màn hình', 3),
-('State Management', 'Provider, Bloc pattern trong Flutter', 3),
+-- Course 3
+('Digital Marketing Overview', 'Tổng quan về marketing online', 3),
+('SEO Optimization', 'Tối ưu hóa công cụ tìm kiếm', 3),
+('Social Media Marketing', 'Marketing trên mạng xã hội', 3),
+('Content Strategy', 'Chiến lược nội dung hiệu quả', 3),
 
--- Course 4: Photoshop
-('Giao diện Photoshop', 'Làm quen với workspace và tools', 4),
-('Layers và Masks', 'Làm việc với layers, layer masks', 4),
-('Retouching ảnh', 'Chỉnh sửa và làm đẹp ảnh', 4),
+-- Course 4
+('Python Basics', 'Cú pháp Python cơ bản', 4),
+('Data Analysis with Pandas', 'Phân tích dữ liệu với Pandas', 4),
+('Machine Learning Intro', 'Giới thiệu Machine Learning', 4),
 
--- Course 5: Marketing
-('Facebook Marketing Overview', 'Giới thiệu về Facebook Marketing', 5),
-('Tạo Facebook Ads', 'Cách tạo và tối ưu quảng cáo Facebook', 5),
-('Instagram Marketing', 'Chiến lược marketing trên Instagram', 5);
+-- Course 5
+('Business Strategy', 'Chiến lược kinh doanh', 5),
+('Financial Management', 'Quản trị tài chính doanh nghiệp', 5),
+('Human Resources', 'Quản lý nhân sự', 5),
 
--- =====================================================
--- INSERT COURSE SKILLS (Kỹ năng học được)
--- =====================================================
+-- Course 6
+('Flutter Setup', 'Cài đặt và cấu hình Flutter', 6),
+('Widget Development', 'Phát triển widgets', 6),
+('State Management', 'Quản lý state trong Flutter', 6),
+
+-- Course 7
+('Business English Basics', 'Tiếng Anh kinh doanh cơ bản', 7),
+('Presentation Skills', 'Kỹ năng thuyết trình', 7),
+('Writing Business Emails', 'Viết email chuyên nghiệp', 7),
+
+-- Course 8
+('Reading Financial Statements', 'Đọc báo cáo tài chính', 8),
+('Investment Strategies', 'Chiến lược đầu tư', 8),
+('Risk Management', 'Quản lý rủi ro đầu tư', 8);
+
+-- =============================================
+-- 5. COURSE SKILLS
+-- =============================================
 INSERT INTO public."CourseSkills" ("Name", "CourseId")
 VALUES
--- Course 1
-('React.js', 1), ('JavaScript ES6+', 1), ('Redux', 1), ('React Hooks', 1),
--- Course 2
-('Python', 2), ('Pandas', 2), ('Machine Learning', 2), ('Data Visualization', 2),
--- Course 3
-('Flutter', 3), ('Dart', 3), ('Mobile Development', 3), ('UI/UX Design', 3),
--- Course 4
-('Photoshop', 4), ('Graphic Design', 4), ('Photo Editing', 4),
--- Course 5
-('Facebook Ads', 5), ('Social Media Marketing', 5), ('Content Marketing', 5);
+('HTML5', 1), ('CSS3', 1), ('JavaScript', 1), ('React', 1), ('Node.js', 1),
+('Figma', 2), ('Adobe XD', 2), ('UI Design', 2), ('UX Research', 2),
+('SEO', 3), ('Google Ads', 3), ('Facebook Ads', 3), ('Content Marketing', 3),
+('Python', 4), ('Pandas', 4), ('NumPy', 4), ('Machine Learning', 4),
+('Strategic Planning', 5), ('Leadership', 5), ('Financial Analysis', 5),
+('Flutter', 6), ('Dart', 6), ('Firebase', 6), ('Mobile Development', 6),
+('Business English', 7), ('Presentation', 7), ('Communication', 7),
+('Financial Analysis', 8), ('Investment', 8), ('Portfolio Management', 8);
 
--- =====================================================
--- INSERT TARGET LEARNERS (Đối tượng học viên)
--- =====================================================
+-- =============================================
+-- 6. TARGET LEARNERS
+-- =============================================
 INSERT INTO public."TargetLearners" ("Description", "CourseId")
 VALUES
--- Course 1
-('Người mới bắt đầu học lập trình web', 1),
-('Lập trình viên muốn học React', 1),
-('Sinh viên công nghệ thông tin', 1),
+('Người mới bắt đầu muốn trở thành lập trình viên web', 1),
+('Sinh viên CNTT muốn nâng cao kỹ năng', 1),
+('Designer muốn chuyển sang UI/UX', 2),
+('Người có nền tảng thiết kế đồ họa', 2),
+('Chủ doanh nghiệp nhỏ và vừa', 3),
+('Nhân viên marketing muốn nâng cao kỹ năng', 3),
+('Người có kiến thức lập trình cơ bản', 4),
+('Data Analyst muốn học Machine Learning', 4),
+('Sinh viên kinh tế', 5),
+('Người mới khởi nghiệp', 5),
+('Lập trình viên muốn phát triển mobile app', 6),
+('Người có kinh nghiệm lập trình', 6),
+('Nhân viên văn phòng', 7),
+('Người làm việc trong môi trường quốc tế', 7),
+('Nhà đầu tư cá nhân', 8),
+('Chuyên viên tài chính', 8);
 
--- Course 2
-('Người quan tâm đến Data Science', 2),
-('Lập trình viên muốn chuyển sang AI/ML', 2),
-('Nhà phân tích dữ liệu', 2),
-
--- Course 3
-('Lập trình viên muốn làm mobile app', 3),
-('Người mới bắt đầu với Flutter', 3),
-
--- Course 4
-('Người yêu thích thiết kế đồ họa', 4),
-('Nhân viên marketing cần thiết kế', 4),
-
--- Course 5
-('Chủ doanh nghiệp nhỏ', 5),
-('Nhân viên marketing', 5),
-('Freelancer cần học marketing online', 5);
-
--- =====================================================
--- INSERT ENROLLMENTS (Đăng ký khóa học)
--- =====================================================
+-- =============================================
+-- 7. ENROLLMENTS (3-4 người cho các khóa học của Trương Thị Hương)
+-- =============================================
 INSERT INTO public."Enrollments" ("EnrollAt", "BuyerId", "CourseId")
 VALUES
--- User 6 (Đỗ Văn Hùng)
-(NOW() - INTERVAL '95 days', 6, 1),
-(NOW() - INTERVAL '90 days', 6, 2),
+-- Course 1 (Trương Thị Hương)
+(NOW() - INTERVAL '45 days', 7, 1),
+(NOW() - INTERVAL '40 days', 8, 1),
+(NOW() - INTERVAL '35 days', 9, 1),
+(NOW() - INTERVAL '30 days', 10, 1),
 
--- User 7 (Vũ Thị Mai)
-(NOW() - INTERVAL '85 days', 7, 1),
-(NOW() - INTERVAL '80 days', 7, 4),
+-- Course 2 (Trương Thị Hương)
+(NOW() - INTERVAL '42 days', 7, 2),
+(NOW() - INTERVAL '38 days', 11, 2),
+(NOW() - INTERVAL '33 days', 12, 2),
 
--- User 8 (Bùi Văn Tuấn)
-(NOW() - INTERVAL '75 days', 8, 2),
-(NOW() - INTERVAL '70 days', 8, 3),
-(NOW() - INTERVAL '65 days', 8, 5),
+-- Course 7 (Trương Thị Hương)
+(NOW() - INTERVAL '25 days', 8, 7),
+(NOW() - INTERVAL '20 days', 9, 7),
+(NOW() - INTERVAL '15 days', 13, 7),
+(NOW() - INTERVAL '10 days', 10, 7),
 
--- User 9 (Đinh Thị Hương)
-(NOW() - INTERVAL '60 days', 9, 1),
-(NOW() - INTERVAL '55 days', 9, 5),
+-- Các khóa học khác (thêm đa dạng)
+(NOW() - INTERVAL '50 days', 7, 3),
+(NOW() - INTERVAL '48 days', 8, 4),
+(NOW() - INTERVAL '46 days', 9, 5),
+(NOW() - INTERVAL '44 days', 10, 6),
+(NOW() - INTERVAL '42 days', 11, 8),
+(NOW() - INTERVAL '40 days', 12, 3),
+(NOW() - INTERVAL '38 days', 13, 4);
 
--- User 10 (Ngô Văn Long)
-(NOW() - INTERVAL '50 days', 10, 4),
-
--- User 11 (Trương Thị Thu)
-(NOW() - INTERVAL '45 days', 11, 2),
-(NOW() - INTERVAL '40 days', 11, 3);
-
--- =====================================================
--- INSERT REVIEWS (Đánh giá khóa học)
--- =====================================================
+-- =============================================
+-- 8. REVIEWS
+-- =============================================
 INSERT INTO public."Reviews" ("Star", "CreatedAt", "Comment", "BuyerId", "CourseId")
 VALUES
--- Course 1
-(5, NOW() - INTERVAL '90 days', 'Khóa học rất hay, giảng viên nhiệt tình. Tôi đã học được rất nhiều về React!', 6, 1),
-(5, NOW() - INTERVAL '82 days', 'Nội dung dễ hiểu, ví dụ thực tế. Rất đáng để học!', 7, 1),
-(4, NOW() - INTERVAL '58 days', 'Khóa học tốt nhưng cần thêm nhiều bài tập thực hành hơn.', 9, 1),
+(5, NOW() - INTERVAL '10 days', 'Khóa học rất hay và bổ ích. Giảng viên nhiệt tình!', 7, 1),
+(4, NOW() - INTERVAL '8 days', 'Nội dung tốt nhưng hơi nhanh ở một số phần', 8, 1),
+(5, NOW() - INTERVAL '6 days', 'Xuất sắc! Tôi đã học được rất nhiều', 9, 1),
+(5, NOW() - INTERVAL '5 days', 'Khóa học thiết kế tuyệt vời', 7, 2),
+(4, NOW() - INTERVAL '12 days', 'Marketing content rất thực tế', 7, 3),
+(5, NOW() - INTERVAL '11 days', 'Python course rất chi tiết', 8, 4),
+(4, NOW() - INTERVAL '9 days', 'Kiến thức kinh doanh hữu ích', 9, 5),
+(5, NOW() - INTERVAL '7 days', 'Flutter course tốt nhất tôi từng học', 10, 6),
+(5, NOW() - INTERVAL '4 days', 'Tiếng Anh giao tiếp cực kỳ hữu ích', 8, 7),
+(4, NOW() - INTERVAL '3 days', 'Phân tích tài chính rất chuyên sâu', 11, 8);
 
--- Course 2
-(5, NOW() - INTERVAL '88 days', 'Khóa học Python tuyệt vời! Từ cơ bản đến nâng cao đều rất chi tiết.', 6, 2),
-(5, NOW() - INTERVAL '72 days', 'Giảng viên giỏi, kiến thức chắc chắn. Rất hài lòng!', 8, 2),
-(5, NOW() - INTERVAL '43 days', 'Best course về Data Science mà tôi từng học.', 11, 2),
-
--- Course 3
-(5, NOW() - INTERVAL '68 days', 'Flutter rất thú vị, học xong có thể làm app luôn.', 8, 3),
-(4, NOW() - INTERVAL '38 days', 'Khóa học hay nhưng hơi nhanh một chút.', 11, 3),
-
--- Course 4
-(4, NOW() - INTERVAL '78 days', 'Học Photoshop hiệu quả, giờ tôi có thể tự thiết kế được rồi.', 7, 4),
-(5, NOW() - INTERVAL '48 days', 'Giảng viên dạy rất dễ hiểu, không bị khó như tôi nghĩ.', 10, 4),
-
--- Course 5
-(4, NOW() - INTERVAL '63 days', 'Khóa học marketing thực chiến, áp dụng được ngay.', 8, 5),
-(5, NOW() - INTERVAL '53 days', 'Rất hữu ích cho công việc của tôi. Recommend!', 9, 5);
-
--- =====================================================
--- INSERT FAVORITES (Yêu thích khóa học)
--- =====================================================
-INSERT INTO public."Favorites" ("UserId", "CourseId")
-VALUES
-(6, 3), (6, 4), (6, 5),
-(7, 2), (7, 3), (7, 5),
-(8, 1), (8, 4),
-(9, 2), (9, 3), (9, 4),
-(10, 1), (10, 2), (10, 3),
-(11, 1), (11, 4), (11, 5);
-
--- =====================================================
--- INSERT CARTS (Giỏ hàng)
--- =====================================================
-INSERT INTO public."Carts" ("UserId", "CreatedAt")
-VALUES
-(6, NOW() - INTERVAL '5 days'),
-(7, NOW() - INTERVAL '3 days'),
-(10, NOW() - INTERVAL '2 days');
-
--- =====================================================
--- INSERT CART ITEMS (Sản phẩm trong giỏ hàng)
--- =====================================================
-INSERT INTO public."CartItems" ("CartId", "CourseId")
-VALUES
--- Cart của User 6
-(1, 3),
-(1, 5),
-
--- Cart của User 7
-(2, 2),
-(2, 3),
-
--- Cart của User 10
-(3, 1),
-(3, 2),
-(3, 5);
-
--- =====================================================
--- INSERT TRANSACTIONS (Giao dịch)
--- =====================================================
+-- =============================================
+-- 9. TRANSACTIONS (12 tháng, 7 ngày gần nhất mỗi ngày có 1 transaction)
+-- =============================================
 INSERT INTO public."Transactions" 
 ("TransactionCode", "PaymentMethod", "TotalAmount", "CreatedAt", "UpdatedAt", "BuyerId")
 VALUES
-('TXN001-2024-001', 'VNPay', 3500000, NOW() - INTERVAL '95 days', NOW() - INTERVAL '95 days', 6),
-('TXN001-2024-002', 'MoMo', 1500000, NOW() - INTERVAL '85 days', NOW() - INTERVAL '85 days', 7),
-('TXN001-2024-003', 'Banking', 1200000, NOW() - INTERVAL '80 days', NOW() - INTERVAL '80 days', 7),
-('TXN001-2024-004', 'VNPay', 5500000, NOW() - INTERVAL '75 days', NOW() - INTERVAL '75 days', 8),
-('TXN001-2024-005', 'MoMo', 2500000, NOW() - INTERVAL '60 days', NOW() - INTERVAL '60 days', 9),
-('TXN001-2024-006', 'Banking', 1200000, NOW() - INTERVAL '50 days', NOW() - INTERVAL '50 days', 10),
-('TXN001-2024-007', 'VNPay', 3800000, NOW() - INTERVAL '45 days', NOW() - INTERVAL '45 days', 11);
+-- Tháng 12/2025 - 7 ngày gần nhất (10-16/12)
+('TXN202512160001', 'Credit Card', 4300000, '2025-12-16 10:30:00+07', '2025-12-16 10:30:00+07', 7),
+('TXN202512150001', 'Bank Transfer', 3700000, '2025-12-15 14:20:00+07', '2025-12-15 14:20:00+07', 8),
+('TXN202512140001', 'E-Wallet', 5100000, '2025-12-14 09:15:00+07', '2025-12-14 09:15:00+07', 9),
+('TXN202512130001', 'Credit Card', 4600000, '2025-12-13 16:45:00+07', '2025-12-13 16:45:00+07', 10),
+('TXN202512120001', 'Bank Transfer', 2800000, '2025-12-12 11:30:00+07', '2025-12-12 11:30:00+07', 11),
+('TXN202512110001', 'E-Wallet', 3400000, '2025-12-11 13:20:00+07', '2025-12-11 13:20:00+07', 12),
+('TXN202512100001', 'Credit Card', 4800000, '2025-12-10 15:10:00+07', '2025-12-10 15:10:00+07', 13),
 
--- =====================================================
--- INSERT TRANSACTION DETAILS (Chi tiết giao dịch)
--- =====================================================
+-- Tháng 12/2025 - đầu tháng
+('TXN202512050001', 'Bank Transfer', 3900000, '2025-12-05 10:00:00+07', '2025-12-05 10:00:00+07', 7),
+('TXN202512020001', 'Credit Card', 4200000, '2025-12-02 14:30:00+07', '2025-12-02 14:30:00+07', 8),
+
+-- Tháng 11/2025
+('TXN202511250001', 'E-Wallet', 3500000, '2025-11-25 11:15:00+07', '2025-11-25 11:15:00+07', 9),
+('TXN202511150001', 'Bank Transfer', 4100000, '2025-11-15 09:30:00+07', '2025-11-15 09:30:00+07', 10),
+
+-- Tháng 10/2025
+('TXN202510220001', 'Credit Card', 3800000, '2025-10-22 13:45:00+07', '2025-10-22 13:45:00+07', 11),
+('TXN202510120001', 'E-Wallet', 4400000, '2025-10-12 10:20:00+07', '2025-10-12 10:20:00+07', 12),
+
+-- Tháng 9/2025
+('TXN202509180001', 'Bank Transfer', 3600000, '2025-09-18 15:30:00+07', '2025-09-18 15:30:00+07', 7),
+
+-- Tháng 8/2025
+('TXN202508250001', 'Credit Card', 4000000, '2025-08-25 11:00:00+07', '2025-08-25 11:00:00+07', 8),
+('TXN202508100001', 'E-Wallet', 3300000, '2025-08-10 14:15:00+07', '2025-08-10 14:15:00+07', 9),
+
+-- Tháng 7/2025
+('TXN202507200001', 'Bank Transfer', 4500000, '2025-07-20 09:45:00+07', '2025-07-20 09:45:00+07', 10),
+
+-- Tháng 6/2025
+('TXN202506280001', 'Credit Card', 3700000, '2025-06-28 16:20:00+07', '2025-06-28 16:20:00+07', 11),
+('TXN202506150001', 'E-Wallet', 4300000, '2025-06-15 10:30:00+07', '2025-06-15 10:30:00+07', 12),
+
+-- Tháng 5/2025
+('TXN202505220001', 'Bank Transfer', 3900000, '2025-05-22 13:00:00+07', '2025-05-22 13:00:00+07', 13),
+
+-- Tháng 4/2025
+('TXN202504180001', 'Credit Card', 4100000, '2025-04-18 11:45:00+07', '2025-04-18 11:45:00+07', 7),
+
+-- Tháng 3/2025
+('TXN202503250001', 'E-Wallet', 3500000, '2025-03-25 14:30:00+07', '2025-03-25 14:30:00+07', 8),
+('TXN202503120001', 'Bank Transfer', 4200000, '2025-03-12 09:15:00+07', '2025-03-12 09:15:00+07', 9),
+
+-- Tháng 2/2025
+('TXN202502200001', 'Credit Card', 3800000, '2025-02-20 15:45:00+07', '2025-02-20 15:45:00+07', 10),
+
+-- Tháng 1/2025
+('TXN202501280001', 'E-Wallet', 4000000, '2025-01-28 10:30:00+07', '2025-01-28 10:30:00+07', 11),
+('TXN202501150001', 'Bank Transfer', 3600000, '2025-01-15 13:20:00+07', '2025-01-15 13:20:00+07', 12);
+
+-- =============================================
+-- 10. TRANSACTION DETAILS
+-- =============================================
 INSERT INTO public."TransactionDetails" ("Price", "TransactionId", "CourseId")
 VALUES
--- Transaction 1 (User 6 mua 2 khóa học)
-(1500000, 1, 1),
-(2000000, 1, 2),
+-- Transaction 1 (16/12)
+(2500000, 1, 1), (1800000, 1, 2),
+-- Transaction 2 (15/12)
+(1900000, 2, 8), (1800000, 2, 2),
+-- Transaction 3 (14/12)
+(2800000, 3, 6), (2200000, 3, 4), (100000, 3, 5),
+-- Transaction 4 (13/12)
+(2500000, 4, 1), (1900000, 4, 8), (200000, 4, 5),
+-- Transaction 5 (12/12)
+(1600000, 5, 7), (1200000, 5, 5),
+-- Transaction 6 (11/12)
+(1500000, 6, 3), (1900000, 6, 8),
+-- Transaction 7 (10/12)
+(2500000, 7, 1), (2200000, 7, 4), (100000, 7, 5),
 
--- Transaction 2 (User 7 mua 1 khóa học)
-(1500000, 2, 1),
+-- Transaction 8 (05/12)
+(1800000, 8, 2), (2200000, 8, 4), (100000, 8, 5),
+-- Transaction 9 (02/12)
+(2500000, 9, 1), (1600000, 9, 7), (100000, 9, 5),
 
--- Transaction 3 (User 7 mua 1 khóa học)
-(1200000, 3, 4),
+-- Tháng 11
+(1500000, 10, 3), (2000000, 10, 4),
+(2800000, 11, 6), (1300000, 11, 5),
 
--- Transaction 4 (User 8 mua 3 khóa học)
-(2000000, 4, 2),
-(1800000, 4, 3),
-(1700000, 4, 5),
+-- Tháng 10
+(1800000, 12, 2), (2000000, 12, 4),
+(2500000, 13, 1), (1900000, 13, 8),
 
--- Transaction 5 (User 9 mua 2 khóa học)
-(1500000, 5, 1),
-(1000000, 5, 5),
+-- Tháng 9
+(1600000, 14, 7), (2000000, 14, 4),
 
--- Transaction 6 (User 10 mua 1 khóa học)
-(1200000, 6, 4),
+-- Tháng 8
+(2500000, 15, 1), (1500000, 15, 3),
+(1500000, 16, 3), (1800000, 16, 2),
 
--- Transaction 7 (User 11 mua 2 khóa học)
-(2000000, 7, 2),
-(1800000, 7, 3);
+-- Tháng 7
+(2800000, 17, 6), (1600000, 17, 7), (100000, 17, 5),
 
--- =====================================================
--- INSERT NOTIFICATIONS (Thông báo cho Seller)
--- =====================================================
+-- Tháng 6
+(1900000, 18, 8), (1800000, 18, 2),
+(2500000, 19, 1), (1800000, 19, 2),
+
+-- Tháng 5
+(1600000, 20, 7), (2200000, 20, 4), (100000, 20, 5),
+
+-- Tháng 4
+(2500000, 21, 1), (1600000, 21, 7),
+
+-- Tháng 3
+(1500000, 22, 3), (2000000, 22, 4),
+(2500000, 23, 1), (1600000, 23, 7), (100000, 23, 5),
+
+-- Tháng 2
+(1800000, 24, 2), (2000000, 24, 4),
+
+-- Tháng 1
+(2500000, 25, 1), (1500000, 25, 3),
+(1600000, 26, 7), (2000000, 26, 4);
+
+-- =============================================
+-- 11. CARTS
+-- =============================================
+INSERT INTO public."Carts" ("UserId", "CreatedAt")
+VALUES
+(7, NOW() - INTERVAL '5 days'),
+(8, NOW() - INTERVAL '3 days'),
+(9, NOW() - INTERVAL '2 days'),
+(10, NOW() - INTERVAL '1 day');
+
+-- =============================================
+-- 12. CART ITEMS
+-- =============================================
+INSERT INTO public."CartItems" ("CartId", "CourseId")
+VALUES
+(1, 3), (1, 5),
+(2, 4), (2, 6),
+(3, 8),
+(4, 3), (4, 7);
+
+-- =============================================
+-- 13. FAVORITES
+-- =============================================
+INSERT INTO public."Favorites" ("UserId", "CourseId")
+VALUES
+(7, 1), (7, 3), (7, 6),
+(8, 2), (8, 4), (8, 7),
+(9, 1), (9, 5), (9, 8),
+(10, 3), (10, 6),
+(11, 2), (11, 4), (11, 7),
+(12, 1), (12, 8),
+(13, 5), (13, 6);
+
+-- =============================================
+-- 14. HISTORIES
+-- =============================================
+INSERT INTO public."Histories" ("UserId", "CourseId", "CreatedAt")
+VALUES
+(7, 1, NOW() - INTERVAL '2 hours'),
+(7, 2, NOW() - INTERVAL '5 hours'),
+(7, 3, NOW() - INTERVAL '1 day'),
+(8, 4, NOW() - INTERVAL '3 hours'),
+(8, 5, NOW() - INTERVAL '8 hours'),
+(9, 1, NOW() - INTERVAL '4 hours'),
+(9, 6, NOW() - INTERVAL '10 hours'),
+(10, 7, NOW() - INTERVAL '6 hours'),
+(10, 8, NOW() - INTERVAL '1 day'),
+(11, 2, NOW() - INTERVAL '7 hours'),
+(12, 3, NOW() - INTERVAL '9 hours'),
+(13, 1, NOW() - INTERVAL '5 hours');
+
+-- =============================================
+-- 15. CONVERSATIONS
+-- =============================================
+INSERT INTO public."Conversations" 
+("CourseId", "BuyerId", "SellerId", "CreatedAt", "LastMessageAt")
+VALUES
+(1, 7, 14, NOW() - INTERVAL '10 days', NOW() - INTERVAL '1 day'),
+(2, 8, 14, NOW() - INTERVAL '8 days', NOW() - INTERVAL '2 hours'),
+(3, 7, 3, NOW() - INTERVAL '15 days', NOW() - INTERVAL '5 days'),
+(4, 9, 4, NOW() - INTERVAL '12 days', NOW() - INTERVAL '3 days'),
+(7, 10, 14, NOW() - INTERVAL '6 days', NOW() - INTERVAL '12 hours');
+
+-- =============================================
+-- 16. MESSAGES
+-- =============================================
+INSERT INTO public."Messages" 
+("ConversationId", "SenderId", "Content", "CreatedAt", "IsRead")
+VALUES
+-- Conversation 1
+(1, 7, 'Xin chào, tôi muốn hỏi về khóa học Full Stack', NOW() - INTERVAL '10 days', true),
+(1, 14, 'Chào bạn! Khóa học bao gồm HTML, CSS, JavaScript, React và Node.js', NOW() - INTERVAL '10 days', true),
+(1, 7, 'Cảm ơn! Thời lượng khóa học là bao lâu?', NOW() - INTERVAL '9 days', true),
+(1, 14, 'Khóa học kéo dài 120 giờ, bạn có thể học theo tốc độ của mình', NOW() - INTERVAL '9 days', true),
+(1, 7, 'Tôi đã đăng ký rồi, cảm ơn nhiều!', NOW() - INTERVAL '1 day', true),
+
+-- Conversation 2
+(2, 8, 'Khóa học UI/UX có phù hợp với người mới không?', NOW() - INTERVAL '8 days', true),
+(2, 14, 'Hoàn toàn phù hợp! Khóa học bắt đầu từ cơ bản', NOW() - INTERVAL '8 days', true),
+(2, 8, 'Tuyệt vời! Tôi sẽ đăng ký ngay', NOW() - INTERVAL '2 hours', false),
+
+-- Conversation 3
+(3, 7, 'Khóa học Digital Marketing có certificate không?', NOW() - INTERVAL '15 days', true),
+(3, 3, 'Có bạn nhé! Sau khi hoàn thành bạn sẽ nhận được chứng chỉ', NOW() - INTERVAL '15 days', true),
+(3, 7, 'Cảm ơn bạn!', NOW() - INTERVAL '5 days', true),
+
+-- Conversation 4
+(4, 9, 'Python course có thực hành không?', NOW() - INTERVAL '12 days', true),
+(4, 4, 'Có nhiều bài tập thực hành và dự án thực tế', NOW() - INTERVAL '12 days', true),
+(4, 9, 'Được rồi, thanks!', NOW() - INTERVAL '3 days', true),
+
+-- Conversation 5
+(5, 10, 'Tôi có thể học English course từ đâu?', NOW() - INTERVAL '6 days', true),
+(5, 14, 'Bạn nên có kiến thức tiếng Anh cơ bản trước', NOW() - INTERVAL '6 days', true),
+(5, 10, 'OK, tôi hiểu rồi', NOW() - INTERVAL '12 hours', false);
+
+-- =============================================
+-- 17. NOTIFICATIONS
+-- =============================================
 INSERT INTO public."Notifications" 
 ("Message", "CreatedAt", "IsRead", "SellerId")
 VALUES
--- Notifications for Seller 2 (Trần Thị Hoa)
-('Bạn có đơn hàng mới từ khóa học "Lập trình React từ cơ bản đến nâng cao"', NOW() - INTERVAL '95 days', true, 2),
-('Học viên Vũ Thị Mai đã đăng ký khóa học của bạn', NOW() - INTERVAL '85 days', true, 2),
-('Bạn nhận được đánh giá 5 sao cho khóa học React', NOW() - INTERVAL '90 days', true, 2),
-('Khóa học "Adobe Photoshop cho người mới bắt đầu" đã được duyệt', NOW() - INTERVAL '100 days', true, 2),
+('Bạn có đơn hàng mới từ khóa học Full Stack Web Development', NOW() - INTERVAL '1 day', true, 14),
+('Học viên mới đăng ký khóa học UI/UX Design', NOW() - INTERVAL '2 days', true, 14),
+('Bạn nhận được review 5 sao cho khóa học Digital Marketing', NOW() - INTERVAL '3 days', false, 3),
+('Có tin nhắn mới từ học viên', NOW() - INTERVAL '2 hours', false, 14),
+('Đơn hàng mới cho khóa học Python for Data Science', NOW() - INTERVAL '5 days', true, 4),
+('Học viên mới đăng ký khóa học Business Management', NOW() - INTERVAL '6 days', true, 5),
+('Có tin nhắn mới từ học viên về khóa học Flutter', NOW() - INTERVAL '12 hours', false, 6),
+('Review mới cho khóa học English for Business', NOW() - INTERVAL '4 days', true, 14);
 
--- Notifications for Seller 3 (Lê Văn Minh)
-('Khóa học "Marketing trên Facebook & Instagram" đã được duyệt', NOW() - INTERVAL '90 days', true, 3),
-('Bạn có khóa học đang chờ duyệt: Node.js và Express', NOW() - INTERVAL '30 days', false, 3),
-
--- Notifications for Seller 4 (Phạm Thị Lan)
-('Khóa học "Python cho Data Science" được 200 học viên đăng ký', NOW() - INTERVAL '50 days', true, 4),
-('Bạn nhận được đánh giá 5 sao từ học viên', NOW() - INTERVAL '88 days', true, 4),
-('Khóa học "Tiếng Anh giao tiếp cơ bản" đang chờ duyệt', NOW() - INTERVAL '20 days', false, 4),
-
--- Notifications for Seller 5 (Hoàng Văn Nam)
-('Khóa học Flutter đã có 120 học viên đăng ký', NOW() - INTERVAL '60 days', true, 5),
-('Bạn có khóa học mới đang chờ duyệt', NOW() - INTERVAL '15 days', false, 5);
+COMMIT;
