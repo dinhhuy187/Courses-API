@@ -382,9 +382,10 @@ public class ChatService : IChatService
     public async Task<int> CountUnreadConversationsAsync(int userId)
     {
         return await _context.Messages
+            .Include(m => m.Conversation)
             .Where(m =>
                 m.SenderId != userId &&   // người gửi là đối phương
-                !m.IsRead                 // chưa đọc
+                !m.IsRead && m.Conversation!.SellerId == userId                 // chưa đọc
             )
             .Select(m => m.ConversationId)
             .Distinct()
