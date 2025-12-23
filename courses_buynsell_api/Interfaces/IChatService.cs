@@ -38,5 +38,6 @@ public interface IChatService
         int buyerId,
         SendMessageWithNewConversationDto dto
     );
-    Task<List<ChatUserSearchResultDto>> SearchUsersAsync(int currentUserId, string query);
+    Task<List<ConversationDto>> SearchUsersAsync(int currentUserId, string query);
+    Task<bool> HideConversationAsync(int userId, int conversationId);
 }

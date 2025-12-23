@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using courses_buynsell_api.DTOs;
 using System.Security.Claims;
+using CloudinaryDotNet.Actions;
 
 namespace courses_buynsell_api.Controllers;
 
@@ -266,5 +267,28 @@ public class ChatController : ControllerBase
 
         var result = await _chatService.SearchUsersAsync(currentUserId, name);
         return Ok(result);
+    }
+
+    [Authorize(Roles = "Seller")]
+    [HttpDelete("conversations/{conversationId}")]
+    public async Task<IActionResult> HideConversation(int conversationId)
+    {
+        try
+        {
+            int userId = GetUserId();
+            bool success = await _chatService.HideConversationAsync(userId, conversationId);
+            if (success)
+            {
+                return Ok(new { message = "Conversation hided successfully" });
+            }
+            else
+            {
+                return NotFound(new { message = "Conversation not found or you don't have access" });
+            }
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }

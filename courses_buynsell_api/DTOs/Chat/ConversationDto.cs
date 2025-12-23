@@ -18,4 +18,5 @@ public class ConversationDto
     public DateTime LastMessageAt { get; set; }
     public MessageDto? LastMessage { get; set; }
     public int UnreadCount { get; set; }
+    public bool IsBlock { get; set; }
 }
