@@ -5,6 +5,7 @@ using courses_buynsell_api.Data;
 using courses_buynsell_api.Config;
 using courses_buynsell_api.Interfaces;
 using courses_buynsell_api.Services;
+using courses_buynsell_api.Services.Implements;
 using courses_buynsell_api.Middlewares;
 using courses_buynsell_api.DTOs.Momo;
 using courses_buynsell_api.Hubs;
@@ -173,6 +174,7 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IHistoryService, HistoryService>();
+builder.Services.AddScoped<IBlockService, BlockService>();
 
 // ⭐ Thêm ChatService - QUAN TRỌNG!
 builder.Services.AddScoped<IChatService, ChatService>();
@@ -199,6 +201,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
+app.UseErrorHandling();
 app.UseHttpsRedirection();
 // Sử dụng CORS
 // ✅ Thứ tự middleware ĐÚNG
@@ -206,8 +210,6 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<JwtMiddleware>();
-app.UseErrorHandling();
-
 app.MapControllers();
 app.MapHub<NotificationHub>("/notificationHub");
 app.MapHub<ChatHub>("/chathub");

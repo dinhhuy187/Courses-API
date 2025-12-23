@@ -3,17 +3,21 @@ using courses_buynsell_api.DTOs.Chat;
 using courses_buynsell_api.DTOs;
 using courses_buynsell_api.Entities;
 using courses_buynsell_api.Interfaces;
+using courses_buynsell_api.Exceptions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace courses_buynsell_api.Services;
 
 public class ChatService : IChatService
 {
     private readonly AppDbContext _context;
+    private readonly IBlockService _blockService;
 
-    public ChatService(AppDbContext context)
+    public ChatService(AppDbContext context, IBlockService blockService)
     {
         _context = context;
+        _blockService = blockService;
     }
 
     public async Task<ConversationDto> GetOrCreateConversationAsync(int buyerId, CreateConversationDto dto)
@@ -73,7 +77,8 @@ public class ChatService : IChatService
     {
         // 1. Chỉ lọc hội thoại, KHÔNG dùng Include ở đây nữa (vì ta sẽ Select cụ thể bên dưới)
         var query = _context.Conversations
-            .Where(c => c.BuyerId == userId || c.SellerId == userId);
+        .Where(c => (c.BuyerId == userId || c.SellerId == userId) && c.IsVisible);
+
 
         var total = await query.CountAsync();
 
@@ -114,7 +119,8 @@ public class ChatService : IChatService
                         SenderId = m.SenderId,
                         IsRead = m.IsRead
                     })
-                    .FirstOrDefault()
+                    .FirstOrDefault(),
+                IsBlock = c.IsBlock
             })
             .ToListAsync();
 
@@ -141,7 +147,7 @@ public class ChatService : IChatService
             .Include(c => c.Course)
             .Include(c => c.Buyer)
             .Include(c => c.Seller)
-            .Where(c => c.CourseId == courseId && c.SellerId == sellerId);
+            .Where(c => c.CourseId == courseId && c.SellerId == sellerId && c.IsVisible);
 
         var total = await query.CountAsync();
 
@@ -211,14 +217,42 @@ public class ChatService : IChatService
         };
     }
 
-
-
     public async Task<MessageDto> SendMessageAsync(int senderId, SendMessageDto dto)
     {
-        // Kiểm tra quyền truy cập conversation
-        if (!await HasAccessToConversationAsync(senderId, dto.ConversationId))
-            throw new Exception("You don't have access to this conversation");
+        // 1. Lấy thông tin Conversation
+        var conversation = await _context.Conversations
+            .FirstOrDefaultAsync(c => c.Id == dto.ConversationId);
 
+        if (conversation == null)
+            throw new Exception("Conversation not found");
+
+        // 2. Xác định người nhận (Recipient) và kiểm tra quyền
+        int recipientId;
+
+        if (senderId == conversation.BuyerId)
+        {
+            // Nếu người gửi là Buyer -> Người nhận là Seller
+            recipientId = conversation.SellerId;
+        }
+        else if (senderId == conversation.SellerId)
+        {
+            // Nếu người gửi là Seller -> Người nhận là Buyer
+            recipientId = conversation.BuyerId;
+        }
+        else
+        {
+            // Người gửi không phải Buyer cũng không phải Seller -> Không có quyền
+            throw new BadRequestException("You don't have access to this conversation");
+        }
+
+        // 3. CHECK BLOCK (Logic quan trọng nhất)
+        bool isBlocked = await _blockService.IsBlockedAsync(senderId, recipientId);
+        if (isBlocked)
+        {
+            throw new BadRequestException("Message cannot be sent...");
+        }
+
+        // 4. Tạo tin nhắn mới
         var message = new Message
         {
             ConversationId = dto.ConversationId,
@@ -230,20 +264,19 @@ public class ChatService : IChatService
 
         _context.Messages.Add(message);
 
-        // Cập nhật LastMessageAt của conversation
-        var conversation = await _context.Conversations
-            .FirstAsync(c => c.Id == dto.ConversationId);
-
+        // 5. Cập nhật trạng thái Conversation
         conversation.LastMessageAt = DateTime.UtcNow;
+        conversation.IsVisible = true;
+        // Logic phụ: Nếu conversation từng bị ẩn, tin nhắn mới sẽ làm nó hiện lại (tùy nghiệp vụ)
 
         await _context.SaveChangesAsync();
 
-        // Load lại message với sender info
-        message = await _context.Messages
-            .Include(m => m.Sender)
+        // 6. Load lại tin nhắn kèm thông tin người gửi để trả về DTO
+        var createdMessage = await _context.Messages
+            .Include(m => m.Sender) // Include để lấy Avatar/Name
             .FirstAsync(m => m.Id == message.Id);
 
-        return MapToMessageDto(message, senderId);
+        return MapToMessageDto(createdMessage, senderId);
     }
 
     public async Task<PagedResult<MessageDto>> GetConversationMessagesAsync(int userId, GetMessagesDto dto)
@@ -359,7 +392,8 @@ public class ChatService : IChatService
             CreatedAt = conversation.CreatedAt,
             LastMessageAt = conversation.LastMessageAt,
             LastMessage = lastMessage != null ? MapToMessageDto(lastMessage, currentUserId) : null,
-            UnreadCount = unreadCount
+            UnreadCount = unreadCount,
+            IsBlock = conversation.IsBlock
         };
     }
 
@@ -456,6 +490,7 @@ public class ChatService : IChatService
         {
             // Sử dụng conversation có sẵn
             conversation = existingConversation;
+            existingConversation.IsVisible = true;
         }
         else
         {
@@ -522,36 +557,80 @@ public class ChatService : IChatService
         };
     }
 
-    public async Task<List<ChatUserSearchResultDto>> SearchUsersAsync(int currentUserId, string query)
+    public async Task<List<ConversationDto>> SearchUsersAsync(
+    int currentUserId,
+    string keyword)
     {
-        if (string.IsNullOrWhiteSpace(query))
-            return new List<ChatUserSearchResultDto>();
+        if (string.IsNullOrWhiteSpace(keyword))
+            return new List<ConversationDto>();
 
-        // 1. Chuyển query về chữ thường và xóa khoảng trắng thừa
-        query = query.Trim().ToLower();
+        keyword = keyword.Trim().ToLower();
 
-        var results = await _context.Conversations
-            .AsNoTracking()
-            .Include(c => c.Buyer)
-            .Include(c => c.Course)
-            .Where(c => c.SellerId == currentUserId &&
-                        // 2. Chuyển tên Buyer về chữ thường, sau đó dùng Contains
-                        // Contains trong EF Core sẽ dịch ra SQL là LIKE '%query%'
-                        c.Buyer.FullName.ToLower().Contains(query))
+        var query = _context.Conversations
+            .Where(c =>
+                (c.BuyerId == currentUserId || c.SellerId == currentUserId) &&
+                (
+                    c.Buyer.FullName.ToLower().Contains(keyword) ||
+                    c.Seller.FullName.ToLower().Contains(keyword)
+                )
+            );
+
+        var conversations = await query
             .OrderByDescending(c => c.LastMessageAt)
-            .Take(20)
-            .Select(c => new ChatUserSearchResultDto
+            .Select(c => new ConversationDto
             {
-                ConversationId = c.Id,
-                BuyerId = c.BuyerId,
-                BuyerName = c.Buyer.FullName, // Lưu ý: Trả về tên gốc (có hoa thường) để hiển thị cho đẹp
-                BuyerAvatar = c.Buyer.AvatarUrl,
+                Id = c.Id,
+                CourseId = c.CourseId,
                 CourseTitle = c.Course.Title,
-                LastMessageAt = c.LastMessageAt
+
+                BuyerId = c.BuyerId,
+                BuyerName = c.Buyer.FullName,
+                BuyerAvatar = c.Buyer.AvatarUrl,
+
+                SellerId = c.SellerId,
+                SellerName = c.Seller.FullName,
+                SellerAvatar = c.Seller.AvatarUrl,
+
+                LastMessageAt = c.LastMessageAt,
+
+                UnreadCount = c.Messages.Count(m =>
+                    !m.IsRead && m.SenderId != currentUserId),
+
+                LastMessage = c.Messages
+                    .OrderByDescending(m => m.CreatedAt)
+                    .Select(m => new MessageDto
+                    {
+                        Id = m.Id,
+                        Content = m.Content,
+                        CreatedAt = m.CreatedAt,
+                        SenderId = m.SenderId,
+                        IsRead = m.IsRead
+                    })
+                    .FirstOrDefault(),
+                IsBlock = c.IsBlock
             })
             .ToListAsync();
 
-        return results;
+        return conversations;
     }
+
+
+    public async Task<bool> HideConversationAsync(int userId, int conversationId)
+    {
+        var conversation = await _context.Conversations
+            .FirstOrDefaultAsync(c =>
+                c.Id == conversationId &&
+                c.SellerId == userId
+            );
+
+        if (conversation == null)
+            return false;
+
+        conversation.IsVisible = false;
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
+
 
 }

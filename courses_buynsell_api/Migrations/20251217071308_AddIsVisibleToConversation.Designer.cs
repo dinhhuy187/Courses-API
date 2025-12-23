@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using courses_buynsell_api.Data;
@@ -11,9 +12,11 @@ using courses_buynsell_api.Data;
 namespace courses_buynsell_api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251217071308_AddIsVisibleToConversation")]
+    partial class AddIsVisibleToConversation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -41,7 +44,7 @@ namespace courses_buynsell_api.Migrations
 
                     b.HasIndex("SellerId");
 
-                    b.ToTable("Blocks");
+                    b.ToTable("Block");
                 });
 
             modelBuilder.Entity("courses_buynsell_api.Entities.Cart", b =>
@@ -130,13 +133,8 @@ namespace courses_buynsell_api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<bool>("IsBlock")
-                        .HasColumnType("boolean");
-
                     b.Property<bool>("IsVisible")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime>("LastMessageAt")
                         .HasColumnType("timestamp with time zone");
