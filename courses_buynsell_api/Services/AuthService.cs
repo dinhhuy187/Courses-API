@@ -102,7 +102,7 @@ public class AuthService : IAuthService
     public async Task ForgotPasswordAsync(string email)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-        if (user == null) return; // Don't reveal if email exists
+        if (user == null) throw new BadRequestException("Email không tồn tại.");
 
         var otp = OtpHelper.GenerateOtp(); // Tạo OTP 6 số
         user.PasswordResetToken = otp;
@@ -118,7 +118,7 @@ public class AuthService : IAuthService
             .FirstOrDefaultAsync(u => u.Email == email && u.PasswordResetToken == OTP);
 
         if (user == null || user.PasswordResetTokenExpiry <= DateTime.UtcNow)
-            throw new BadRequestException("Invalid or expired OTP.");
+            throw new BadRequestException("OTP không hợp lệ hoặc đã hết hạn.");
     }
 
     public async Task ResetPasswordAsync(string OTP, string newPassword, string email)
@@ -127,7 +127,7 @@ public class AuthService : IAuthService
             .FirstOrDefaultAsync(u => u.PasswordResetToken == OTP && u.Email == email);
 
         if (user == null || user.PasswordResetTokenExpiry <= DateTime.UtcNow)
-            throw new BadRequestException("Invalid or expired reset token.");
+            throw new BadRequestException("OTP không hợp lệ hoặc đã hết hạn.");
 
         user.PasswordHash = PasswordHasher.HashPassword(newPassword);
         user.PasswordResetToken = null;

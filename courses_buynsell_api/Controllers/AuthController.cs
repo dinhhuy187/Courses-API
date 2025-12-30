@@ -22,32 +22,63 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequestDto dto)
     {
-        var result = await _authService.RegisterAsync(dto);
-
-        // ✅ KHÔNG set cookie khi register (vì chưa có refreshToken)
-        // User cần verify email trước khi login
-        return Ok(new
+        try
         {
-            message = "Registration successful. Please check your email to verify your account.",
-            email = result.Email,
-            fullName = result.FullName,
-            role = result.Role
-        });
+            var result = await _authService.RegisterAsync(dto);
+
+            // KHÔNG set cookie khi register (chưa có refresh token)
+            return Ok(new
+            {
+                message = "Registration successful. Please check your email to verify your account.",
+                email = result.Email,
+                fullName = result.FullName,
+                role = result.Role
+            });
+        }
+        catch (BadRequestException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (UnauthorizedException ex) // email / username đã tồn tại
+        {
+            return Conflict(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
     }
+
 
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequestDto dto)
     {
-        var result = await _authService.LoginAsync(dto);
-
-        // ✅ Chỉ set cookie khi login thành công
-        if (!string.IsNullOrEmpty(result.RefreshToken))
+        try
         {
-            SetRefreshTokenCookie(result.RefreshToken);
-        }
+            var result = await _authService.LoginAsync(dto);
 
-        return Ok(result);
+            // Chỉ set cookie khi login thành công
+            if (!string.IsNullOrEmpty(result.RefreshToken))
+            {
+                SetRefreshTokenCookie(result.RefreshToken);
+            }
+
+            return Ok(result);
+        }
+        catch (UnauthorizedException ex) // sai mật khẩu / chưa verify email
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (NotFoundException ex) // không tồn tại user
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
     }
+
 
     [HttpPost("refresh-token")]
     public async Task<IActionResult> RefreshToken()
@@ -113,23 +144,67 @@ public class AuthController : ControllerBase
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordDto dto)
     {
-        await _authService.ForgotPasswordAsync(dto.Email);
-        return Ok(new { message = "If the email exists, a password reset OTP has been sent." });
+        try
+        {
+            await _authService.ForgotPasswordAsync(dto.Email);
+            return Ok(new { message = "If the email exists, a password reset OTP has been sent." });
+        }
+        catch (BadRequestException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
     }
+
 
     [HttpPost("check-otp")]
     public async Task<IActionResult> CheckOTP(CheckOTPDto dto)
     {
-        await _authService.CheckOTPAsync(dto.Email, dto.OTP);
-        return Ok(new { message = "OTP is valid" });
+        try
+        {
+            await _authService.CheckOTPAsync(dto.Email, dto.OTP);
+            return Ok(new { message = "OTP is valid" });
+        }
+        catch (BadRequestException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
     }
+
 
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword(ResetPasswordDto dto)
     {
-        await _authService.ResetPasswordAsync(dto.OTP, dto.NewPassword, dto.Email);
-        return Ok(new { message = "Password reset successfully. Please login with your new password." });
+        try
+        {
+            await _authService.ResetPasswordAsync(dto.OTP, dto.NewPassword, dto.Email);
+            return Ok(new { message = "Password reset successfully. Please login with your new password." });
+        }
+        catch (BadRequestException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
     }
+
 
     [HttpPost("logout")]
     public IActionResult Logout()
