@@ -249,6 +249,15 @@ public class AuthController : ControllerBase
         });
     }
 
+    [HttpGet("wake-up")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetVerificationEmailTemplate()
+    {
+        return Ok(new
+        {
+            message = "wake up success"
+        });
+    }
 
     private void SetRefreshTokenCookie(string refreshToken)
     {
